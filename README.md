@@ -27,7 +27,7 @@ solr.undertow: {
 }
 ```
 
-In this configuration `solrHome` contains either `conf` subdirectory with a normal Solr standalone configuration.  Or contains `solr.xml` and `zoo.cfg` for a SolrCloud configuration.
+In this configuration `solrHome` contains at minimum `solr.xml` (and `zoo.cfg` if SolrCloud) and any pre-configured cores.
 
 The defaults, and all configuration options can be seen in the configuration defaults file.  Which include `httpClusterPort: 8983`, the default server port.
 
