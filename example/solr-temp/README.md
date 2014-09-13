@@ -1,0 +1,1 @@
+Solr WAR files are extracted here in a cache
