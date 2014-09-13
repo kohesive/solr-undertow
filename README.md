@@ -35,6 +35,8 @@ In this configuration `solrHome` contains at minimum `solr.xml` (and `zoo.cfg` i
 
 The defaults, and all configuration options can be seen in the configuration defaults file.  Which include `httpClusterPort: 8983`, the default server port.
 
+Configured directories are validated at startup to give clear error messages, they are checked for existance and readable/writeable attributes (depending on the directory).
+
 #### Example Configuration / Directory Tree
 
 Two example configurations are provided in the [examples directory](https://github.com/bremeld/solr-undertow/tree/master/example):
