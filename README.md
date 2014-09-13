@@ -53,11 +53,11 @@ The Solr Typical setting overrides the solr-undertow equivalent system property,
 Other Notes
 ===========
 
-This requires JDK 1.7 or newer.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Start with default settings for garbage collection, and tune from there if needed at all. 
+*This requires JDK 1.7 or newer*.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Start with default settings for garbage collection, and tune from there if needed at all. 
 
-You can find Solr WAR files in Maven repository.  For example [Solr 4.10.0 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.0/solr-4.10.0.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
+*You can download Solr WAR files* from the Maven repository.  For example [Solr 4.10.0 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.0/solr-4.10.0.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
 
-To set additional Java startup parameters for the VM, you can set the `SOLR_UNDERTOW_OPTS` environment variable before running, for example:
+*To set additional Java startup parameters* for the VM, you can set the `SOLR_UNDERTOW_OPTS` environment variable before running, for example:
 
 ```sh
 export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256m"
@@ -69,7 +69,7 @@ And an example adding support for JMX:
 export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256m -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9901 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
 ```
 
-Logging is via Slf4j routing to Log4j and can be configured differently than the default by providing a [custom configuration file](http://logging.apache.org/log4j/2.x/manual/configuration.html) pointed to by the system property log4j.configurationFile.   
+*Logging is via Slf4j routing to Log4j* and can be configured differently than the default by providing a [custom configuration file](http://logging.apache.org/log4j/2.x/manual/configuration.html) pointed to by the system property log4j.configurationFile.   
 
 Building Your Own Binary
 ========
