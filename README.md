@@ -89,6 +89,19 @@ export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256
 
 *Logging is via Slf4j routing to Log4j* and can be configured differently than the [default](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/log4j.properties) by providing a [custom configuration file](http://logging.apache.org/log4j/2.x/manual/configuration.html) pointed to by the system property log4j.configurationFile. 
 
+#### Defaults for HTTP IO and Worker threads
+
+The following settings are defaulted as:
+
+|Setting|Default|
+|---|---|
+|httpIoThreads|number of system cores, as returned by Runtime.getRuntime().availableProcessors()|
+|httpWorkerThreads|httpIoThreads * 8|
+
+It is rare that you would ever adjust `httpIoThreads` (and 2 * cores would be about the max value ever needed at any scale level).  
+
+For `httpWorkerThreads` you should be conservative but not start Solr process.  In the Solr distribution, you see that Jetty is configured with a max worker thread count of 10,000.  Do not immediately jump to this setting.  Some user accounts have a file handle limit that this could exceed causing issues.  And this is an excesively high number.  It is best to test your performance and CPU usage, and set the worker threads to a value that protects you from a "train wreck" where your CPU is overloaded and performance degrades dramatically.  Find a value that keeps your CPU from max, leave head room for commits and index warming, and let the `httpWorkerThreads` keep the system from overloading, while having enough to maximize throughput.  Find the sweet spot by running typical load with something like [JMeter](http://jmeter.apache.org) that puts CPU above 90%, then lowering the worker threads until CPU drops to whatever maximum is safe for your envirionment.  It is better to queue users or reject them than to crush and kill your Solr instance.
+
 Building Your Own Binary
 ========
 
