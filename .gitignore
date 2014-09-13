@@ -2,3 +2,5 @@
 /.gradle/
 /.idea/
 *.iml
+/solr-wars/
+/solr0/

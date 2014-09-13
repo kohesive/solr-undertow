@@ -47,7 +47,6 @@ private class ServerConfigLoader(val configFile: File) {
 
     fun fixupLogging() {
         System.setProperty("org.jboss.logging.provider", "slf4j")
-        System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
 
         if (!resolvedConfig.hasPath("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLRLOG}")) {
             System.err.println("solr.undertow.solrLogs is missing from configFile, is required for logging")
@@ -69,8 +68,8 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
     }
 
     val httpHost = cfg.getString("httpHost")!!
-    val httpIoThreads = cfg.getInt("httpIoThreads").isPositiveNumberElse(-1)
-    val httpWorkerThreads = cfg.getInt("httpWorkerThreads").isPositiveNumberElse(-1)
+    val httpIoThreads = Math.max(cfg.getInt("httpIoThreads"),0)
+    val httpWorkerThreads = Math.max(cfg.getInt("httpWorkerThreads"),0)
 
     val activeRequestLimits = cfg.getStringList("activeRequestLimits")!!.copyToArray()
 

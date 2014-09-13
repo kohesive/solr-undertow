@@ -30,8 +30,3 @@ private fun deleteRecursive(f: File): Unit {
     }
     f.delete()
 }
-
-private fun Int.isPositiveNumberElse(defaultTo: Int): Int = if (this >= 1) this else defaultTo
-
-
-
