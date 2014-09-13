@@ -30,3 +30,14 @@ private fun deleteRecursive(f: File): Unit {
     }
     f.delete()
 }
+
+private fun String.trimSlashes(): String {
+    var temp = this.trim()
+    if (temp.startsWith('/')) {
+        temp = temp.substring(1)
+    }
+    if (temp.endsWith('/')) {
+        temp = temp.substring(0,temp.length()-1)
+    }
+    return temp
+}

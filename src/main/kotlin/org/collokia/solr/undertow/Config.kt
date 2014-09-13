@@ -24,7 +24,9 @@ import java.nio.file.Files
 import java.util.HashMap
 
 private val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
+
 private val SYS_PROP_JETTY_PORT = "jetty.port"
+private val OUR_PROP_HTTP_PORT = "httpClusterPort"
 
 private val SYS_PROP_ZKRUN = "zkRun"
 private val OUR_PROP_ZKRUN = SYS_PROP_ZKRUN
@@ -35,7 +37,11 @@ private val OUR_PROP_ZKHOST = SYS_PROP_ZKHOST
 private val SYS_PROP_SOLRLOG = "solr.log"
 private val OUR_PROP_SOLRLOG = "solrLogs"
 
+private val SYS_PROP_HOSTCONTEXT = "hostContext"
+private val OUR_PROP_HOSTCONTEXT = "solrContextPath"
+
 private val SYS_PROP_SOLRHOME = "solr.solr.home"
+private val OUR_PROP_SOLRHOME = "solrHome"
 
 private class ServerConfigLoader(val configFile: File) {
     private val propertyOverrides = ConfigFactory.defaultOverrides()!!
@@ -62,14 +68,14 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
 
     val httpClusterPort = run {
         // Solr configuration files reference this port by default, so let's set it in case they haven't been customized
-        val temp = System.getProperty(SYS_PROP_JETTY_PORT) ?: cfg.getString("httpClusterPort")!!
+        val temp = System.getProperty(SYS_PROP_JETTY_PORT) ?: cfg.getString(OUR_PROP_HTTP_PORT)!!
         System.setProperty(SYS_PROP_JETTY_PORT, temp)
         temp.toInt()
     }
 
     val httpHost = cfg.getString("httpHost")!!
-    val httpIoThreads = Math.max(cfg.getInt("httpIoThreads"),0)
-    val httpWorkerThreads = Math.max(cfg.getInt("httpWorkerThreads"),0)
+    val httpIoThreads = Math.max(cfg.getInt("httpIoThreads"), 0)
+    val httpWorkerThreads = Math.max(cfg.getInt("httpWorkerThreads"), 0)
 
     val activeRequestLimits = cfg.getStringList("activeRequestLimits")!!.copyToArray()
 
@@ -84,7 +90,7 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
 
     val solrHome = run {
         // SOLR references solr.solr.home in config files by default, so set the variable to match our configuration
-        val temp = File(cfg.getString("solrHome")!!)
+        val temp = File(cfg.getString(OUR_PROP_SOLRHOME)!!)
         System.setProperty(SYS_PROP_SOLRHOME, temp.getAbsolutePath())
         temp
     }
@@ -102,7 +108,14 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
 
     val solrWarFile = File(cfg.getString("solrWarFile")!!)
 
-    val solrContextPath = cfg.getString("solrContextPath")!!
+    val solrContextPath = run {
+        var contextPathValue = System.getProperty(SYS_PROP_HOSTCONTEXT) ?: cfg.getString(OUR_PROP_HOSTCONTEXT)!!
+        System.setProperty(SYS_PROP_HOSTCONTEXT, contextPathValue.trimSlashes())
+        if (contextPathValue.isEmpty()) {
+           contextPathValue = "/"
+        }
+        contextPathValue
+    }
 
     val libExtDirName = cfg.getString("libExtDir")!!.trim()
     val libExtDir = File(libExtDirName)
@@ -214,6 +227,7 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
 
         return isValid
     }
+}
 }
 
 private class RequestLimitConfig(private val log: Logger, val name: String, private val cfg: Config) {
