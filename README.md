@@ -7,6 +7,8 @@ Releases [are available here](https://github.com/bremeld/solr-undertow/releases)
 
 This application launches a Solr WAR file as a standalone server running a high performance HTTP front-end based on [undertow.io](http://undertow.io) (the engine behind WildFly, the new JBoss).  It has no features of an application server, does nothing more than load Solr servlets and also service the Admin UI.  It is production-quality for a stand-alone Solr server.
 
+**NOTE:** Be sure to read the section below entitled "HTTP IO and Worker threads" since the defaults are very conservative.
+
 #### Usage
 
 Usage is simple, you only need a configuration file and a Solr WAR:
@@ -89,7 +91,7 @@ export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256
 
 **Logging is via Slf4j routing to _Log4j_** and can be configured differently than the [default](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/log4j.properties) by providing a [custom configuration file](http://logging.apache.org/log4j/2.x/manual/configuration.html) pointed to by the system property log4j.configurationFile. 
 
-#### Defaults for HTTP IO and Worker threads
+#### HTTP IO and Worker threads
 
 The following settings are defaulted as:
 
