@@ -1,0 +1,1 @@
+Solr log files will be written here
