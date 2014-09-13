@@ -33,7 +33,7 @@ solr.undertow: {
 
 In this configuration `solrHome` contains at minimum `solr.xml` (and `zoo.cfg` if SolrCloud) and any pre-configured cores.
 
-The defaults, and all configuration options can be seen in the configuration defaults file.  Which include `httpClusterPort: 8983`, the default server port.
+The defaults, and all configuration options can be seen in the [configuration defaults file](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/reference.conf).  Which include `httpClusterPort: 8983`, the default server port.
 
 Configured directories are validated at startup to give clear error messages, they are checked for existance and readable/writeable attributes (depending on the directory).
 
@@ -87,7 +87,7 @@ export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256
 
 #### Logging
 
-*Logging is via Slf4j routing to Log4j* and can be configured differently than the default by providing a [custom configuration file](http://logging.apache.org/log4j/2.x/manual/configuration.html) pointed to by the system property log4j.configurationFile. 
+*Logging is via Slf4j routing to Log4j* and can be configured differently than the [default](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/log4j.properties) by providing a [custom configuration file](http://logging.apache.org/log4j/2.x/manual/configuration.html) pointed to by the system property log4j.configurationFile. 
 
 Building Your Own Binary
 ========
