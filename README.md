@@ -3,6 +3,8 @@ solr-undertow
 
 Solr running in standalone server - High Performance, fast, easy, standalone deployment.  Requires JDK 1.7 or newer.
 
+Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub.
+
 This application launches a Solr WAR file as a standalone server running a high performance HTTP front-end based on [undertow.io](http://undertow.io) (the engine behind WildFly, the new JBoss).  It has no features of an application server, does nothing more than load Solr servlets and also service the Admin UI.  It is production-quality for a stand-alone Solr server.
 
 Usage is simple, you only need a configuration file and a Solr WAR:
@@ -46,7 +48,7 @@ Settings from the configuration file will be overriden by system properties of t
 |solr.solr.home|solrHome|
 |solr.data.dir|(no equivalent, not checked, passes through to Solr)|
 
-The Solr Typical setting overrides the solr-undertow equivalent system property which overrides the same value from the configuraiton file.
+The Solr Typical setting overrides the solr-undertow equivalent system property, which overrides the same value from the configuration file.  You only need to provide one (preferably the solr-undertow version) and the other will be set to match.
 
 Other Notes
 ===========
