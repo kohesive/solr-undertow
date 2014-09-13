@@ -104,6 +104,10 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
 
     val solrContextPath = cfg.getString("solrContextPath")!!
 
+    val libExtDirName = cfg.getString("libExtDir")!!.trim()
+    val libExtDir = File(libExtDirName)
+    fun hasLibExtDir(): Boolean = libExtDirName.isNotEmpty()
+
     val zkRun = run {
         // SOLR looks for zkRun system property, so we can use it if set, and also set it from  our config
         val sysZkRun = if (System.getProperty(SYS_PROP_ZKRUN) != null) true else false
@@ -155,6 +159,9 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
         printS(::solrVersion)
         printF(::solrWarFile)
         printS(::solrContextPath)
+        if (hasLibExtDir()) {
+            printF(::libExtDir)
+        }
         if (log.isDebugEnabled()) {
             log.debug("<<<< CONFIGURATION FILE TRACE >>>>")
             log.debug(cfg.root()!!.render())
@@ -182,6 +189,16 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
             }
         }
 
+        fun existsIsReadable(p: KMemberProperty<ServerConfig, File>) {
+            val dir = p.get(this)
+            if (!dir.exists()) {
+                err("${p.name} does not exist: ${dir.getAbsolutePath()}")
+            }
+            if (!Files.isReadable(dir.toPath()!!)) {
+                err("${p.name} must be readable by current user: ${dir.getAbsolutePath()}")
+            }
+        }
+
         requestLimiters.values().forEach { rl ->
             rl.validate()
         }
@@ -189,10 +206,12 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
         existsIsWriteable(::solrHome)
         existsIsWriteable(::solrLogs)
         existsIsWriteable(::tempDir)
+        existsIsReadable(::solrWarFile)
 
-        if (!solrWarFile.exists()) {
-            error("solrWarFile must exist, expected WAR filename is: ${solrWarFile.getAbsolutePath()}")
+        if (hasLibExtDir()) {
+            existsIsReadable(::libExtDir)
         }
+
         return isValid
     }
 }

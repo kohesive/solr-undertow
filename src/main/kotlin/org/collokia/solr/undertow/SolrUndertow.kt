@@ -97,6 +97,12 @@ private class Server(cfgLoader: ServerConfigLoader) {
             jarFiles.add(jarDestination.toUri().toURL())
         }
 
+        if (cfg.hasLibExtDir()) {
+            Files.newDirectoryStream(cfg.libExtDir.toPath(), "*.jar")!!.forEach { extJar ->
+                jarFiles.add(extJar.toUri().toURL())
+            }
+        }
+
         var warCopyFailed = false
 
         Files.walkFileTree(warRootPath, object : FileVisitor<Path?> {
