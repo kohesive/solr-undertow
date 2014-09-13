@@ -39,10 +39,10 @@ Configured directories are validated at startup to give clear error messages, th
 
 #### Example Configuration / Directory Tree
 
-Two example configurations are provided in the [examples directory](https://github.com/bremeld/solr-undertow/tree/master/example):
+Two example configurations are provided in the [example directory](https://github.com/bremeld/solr-undertow/tree/master/example):
 
-* Basic configuration 
-* Configuration with request limitting (max concurrent requests + max queued requests)
+* [Basic configuration](https://github.com/bremeld/solr-undertow/blob/master/example/example.conf)
+* [Configuration with request limitting](https://github.com/bremeld/solr-undertow/blob/master/example/example-ratelimited.conf) (max concurrent requests + max queued requests)
 
 #### System Properties
 
