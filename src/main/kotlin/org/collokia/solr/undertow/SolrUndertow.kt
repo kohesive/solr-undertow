@@ -47,7 +47,7 @@ private class Server(cfgLoader: ServerConfigLoader) {
         val solrWarDeployment = deployWarFileToCache(cfg.solrWarFile)
 
         val ioThreads = Math.max(1, if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads)
-        val workerThreads = if (cfg.httpWorkerThreads == 0) ioThreads * 8 else cfg.httpWorkerThreads
+        val workerThreads = if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads
 
         val server = Undertow.builder()!!
                 .addHttpListener(cfg.httpClusterPort, cfg.httpHost)!!
