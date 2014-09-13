@@ -98,7 +98,7 @@ private class Server(cfgLoader: ServerConfigLoader) {
         }
 
         if (cfg.hasLibExtDir()) {
-            Files.newDirectoryStream(cfg.libExtDir.toPath(), "*.jar")!!.forEach { extJar ->
+            Files.newDirectoryStream(cfg.libExtDir.toPath()!!, "*.jar")!!.forEach { extJar ->
                 jarFiles.add(extJar.toUri().toURL())
             }
         }

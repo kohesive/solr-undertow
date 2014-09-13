@@ -228,7 +228,7 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
         return isValid
     }
 }
-}
+
 
 private class RequestLimitConfig(private val log: Logger, val name: String, private val cfg: Config) {
     val exactPaths = if (cfg.hasPath("exactPaths")) cfg.getStringList("exactPaths")!! else listOf<String>()
