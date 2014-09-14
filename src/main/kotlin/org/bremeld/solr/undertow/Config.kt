@@ -19,11 +19,11 @@ import kotlin.reflect.KMemberProperty
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import org.slf4j.Logger
-import java.io.File
 import java.nio.file.Files
 import java.util.HashMap
 import java.util.Properties
 import com.typesafe.config.ConfigResolveOptions
+import java.nio.file.Path
 
 private val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
 
@@ -54,9 +54,9 @@ private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_HOSTCONTEXT to OUR_PROP_HOSTCONTEXT,
         SYS_PROP_SOLRHOME to OUR_PROP_SOLRHOME)
 
-private class ServerConfigLoader(val configFile: File) {
+private class ServerConfigLoader(val configFile: Path) {
     private val solrOverrides = ConfigFactory.parseProperties(getRelevantSystemProperties())!!
-    private val userConfig = ConfigFactory.parseFile(configFile)!!
+    private val userConfig = ConfigFactory.parseFile(configFile.toFile())!!
     private val fullConfig = solrOverrides + userConfig
 
     val resolvedConfig = ConfigFactory.load(fullConfig, ConfigResolveOptions.noSystem())!! then { config ->
@@ -113,41 +113,42 @@ private class ServerConfigLoader(val configFile: File) {
 }
 
 private class ServerConfig(private val log: Logger, private val loader: ServerConfigLoader) {
-    val cfg = loader.resolvedConfig.getConfig(SOLR_UNDERTOW_CONFIG_PREFIX)!!
-    val httpClusterPort = cfg.getInt(OUR_PROP_HTTP_PORT)
-    val httpHost = cfg.getString("httpHost")!!
-    val httpIoThreads = Math.max(cfg.getInt("httpIoThreads"), 0)
-    val httpWorkerThreads = Math.max(cfg.getInt("httpWorkerThreads"), 0)
-    val activeRequestLimits = cfg.getStringList("activeRequestLimits")!!.copyToArray()
+    val configured = loader.resolvedConfig.getConfig(SOLR_UNDERTOW_CONFIG_PREFIX)!!
+
+    val httpClusterPort = configured.value(OUR_PROP_HTTP_PORT).asInt()
+    val httpHost = configured.value("httpHost").asString()
+    val httpIoThreads = configured.value("httpIoThreads").asInt().minimum(0)
+    val httpWorkerThreads = configured.value("httpWorkerThreads").asInt().minimum(0)
+    val activeRequestLimits = configured.value("activeRequestLimits").asStringArray()
     val requestLimiters = HashMap<String, RequestLimitConfig>() initializedBy { requestLimiters ->
-        val namedConfigs = cfg.getConfig("requestLimits")!!
+        val namedConfigs = configured.nested("requestLimits")
         activeRequestLimits.forEach { name ->
             requestLimiters.put(name, RequestLimitConfig(log, name, namedConfigs.getConfig(name)!!))
         }
     }
-    val zkRun = cfg.getBoolean(OUR_PROP_ZKRUN)
-    val zkHost = cfg.getString(OUR_PROP_ZKHOST)!!
-    val solrHome = File(cfg.getString(OUR_PROP_SOLRHOME)!!)
-    val solrLogs = File(cfg.getString(OUR_PROP_SOLRLOG)!!)
-    val tempDir = File(cfg.getString("tempDir")!!)
-    val solrVersion = cfg.getString("solrVersion")!!
-    val solrWarFile = File(cfg.getString("solrWarFile")!!)
-    val libExtDirName = cfg.getString("libExtDir")!!.trim()
-    val libExtDir = File(libExtDirName)
-    val solrContextPath = cfg.getString(OUR_PROP_HOSTCONTEXT)!!.trim() let { solrContextPath ->
+    val zkRun = configured.value(OUR_PROP_ZKRUN).asBoolean()
+    val zkHost = configured.value(OUR_PROP_ZKHOST).asString()
+    val solrHome = configured.value(OUR_PROP_SOLRHOME).asPath()
+    val solrLogs = configured.value(OUR_PROP_SOLRLOG).asPath()
+    val tempDir = configured.value("tempDir").asPath()
+    val solrVersion = configured.value("solrVersion").asString()
+    val solrWarFile = configured.value("solrWarFile").asPath()
+    val libExtDir = configured.value("libExtDir").asPath()
+    val solrContextPath = configured.value(OUR_PROP_HOSTCONTEXT).asString() let { solrContextPath ->
         if (solrContextPath.isEmpty()) "/" else solrContextPath
     }
 
-    fun hasLibExtDir(): Boolean = libExtDirName.isNotEmpty()
+    fun hasLibExtDir(): Boolean = configured.value("libExtDir").isNotEmptyString()
 
-    private fun printF(p: KMemberProperty<ServerConfig, File>) = log.info("  ${p.name}: ${p.get(this).getAbsolutePath()}")
+
+    private fun printF(p: KMemberProperty<ServerConfig, Path>) = log.info("  ${p.name}: ${p.get(this)}")
     private fun printS(p: KMemberProperty<ServerConfig, String>) = log.info("  ${p.name}: ${p.get(this)}")
     private fun printSA(p: KMemberProperty<ServerConfig, Array<String>>) = log.info("  ${p.name}: ${p.get(this).joinToString(",")}")
-    private fun printB(p: KMemberProperty<ServerConfig, Boolean>) = log.info("  ${p.name}: ${p.get(this).toString()}")
-    private fun printI(p: KMemberProperty<ServerConfig, Int>) = log.info("  ${p.name}: ${p.get(this).toString()}")
+    private fun printB(p: KMemberProperty<ServerConfig, Boolean>) = log.info("  ${p.name}: ${p.get(this)}")
+    private fun printI(p: KMemberProperty<ServerConfig, Int>) = log.info("  ${p.name}: ${p.get(this)}")
 
     fun print() {
-        log.info("=== [ Config File settings from: ${loader.configFile.getAbsolutePath()} ] ===")
+        log.info("=== [ Config File settings from: ${loader.configFile} ] ===")
         printB(::zkRun)
         printS(::zkHost)
         printI(::httpClusterPort)
@@ -172,7 +173,7 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
         }
         if (log.isDebugEnabled()) {
             log.debug("<<<< CONFIGURATION FILE TRACE >>>>")
-            log.debug(cfg.root()!!.render())
+            log.debug(configured.root()!!.render())
         }
         log.info("=== [ END CONFIG ] ===")
 
@@ -180,30 +181,30 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
     }
 
     fun validate(): Boolean {
-        log.info("Validating configuration from: ${loader.configFile.getAbsolutePath()}")
+        log.info("Validating configuration from: ${loader.configFile}")
         var isValid = true
         fun err(msg: String) {
             log.error(msg)
             isValid = false
         }
 
-        fun existsIsWriteable(p: KMemberProperty<ServerConfig, File>) {
+        fun existsIsWriteable(p: KMemberProperty<ServerConfig, Path>) {
             val dir = p.get(this)
-            if (!dir.exists()) {
-                err("${p.name} dir does not exist: ${dir.getAbsolutePath()}")
+            if (!Files.exists(dir)) {
+                err("${p.name} dir does not exist: ${dir}")
             }
-            if (!Files.isWritable(dir.toPath()!!)) {
-                err("${p.name} dir must be writable by current user: ${dir.getAbsolutePath()}")
+            if (!Files.isWritable(dir)) {
+                err("${p.name} dir must be writable by current user: ${dir}")
             }
         }
 
-        fun existsIsReadable(p: KMemberProperty<ServerConfig, File>) {
+        fun existsIsReadable(p: KMemberProperty<ServerConfig, Path>) {
             val dir = p.get(this)
-            if (!dir.exists()) {
-                err("${p.name} does not exist: ${dir.getAbsolutePath()}")
+            if (!Files.exists(dir)) {
+                err("${p.name} does not exist: ${dir}")
             }
-            if (!Files.isReadable(dir.toPath()!!)) {
-                err("${p.name} must be readable by current user: ${dir.getAbsolutePath()}")
+            if (!Files.isReadable(dir)) {
+                err("${p.name} must be readable by current user: ${dir}")
             }
         }
 

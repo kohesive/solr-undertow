@@ -66,10 +66,10 @@ private class Server(cfgLoader: ServerConfigLoader) {
 
     private data class DeployedWarInfo(val cacheDir: Path, val htmlDir: Path, val libDir: Path, val classLoader: URLClassLoader)
 
-    private fun deployWarFileToCache(solrWar: File): DeployedWarInfo {
-        log.info("Extracting WAR file: ${solrWar.getAbsolutePath()}")
+    private fun deployWarFileToCache(solrWar: Path): DeployedWarInfo {
+        log.info("Extracting WAR file: ${solrWar}")
 
-        val tempDirThisSolr = File(cfg.tempDir, cfg.solrVersion).toPath()!!
+        val tempDirThisSolr = cfg.tempDir.resolve(cfg.solrVersion)!!
         val tempDirHtml = tempDirThisSolr.resolve("html-root")!!
         val tempDirJars = tempDirThisSolr.resolve("lib")!!
 
@@ -78,13 +78,13 @@ private class Server(cfgLoader: ServerConfigLoader) {
         Files.createDirectories(tempDirHtml)
         Files.createDirectories(tempDirJars)
 
-        val warUri = URI.create("jar:file:${solrWar.getAbsoluteFile()}")
+        val warUri = URI.create("jar:file:${solrWar}")
         val warJarFs = FileSystems.newFileSystem(warUri, mapOf("create" to "false"))!!
         val warLibPath = warJarFs.getPath("/WEB-INF/lib/")
         val warRootPath = warJarFs.getPath("/")
 
         if (!Files.exists(warLibPath) || !Files.isDirectory(warLibPath)) {
-            log.error("The WAR file ${solrWar.getAbsolutePath()} does not contain WEB-INF/lib/ directory for the classpath jars")
+            log.error("The WAR file ${solrWar} does not contain WEB-INF/lib/ directory for the classpath jars")
             throw RuntimeException("Server cannot start.")
         }
 
@@ -96,7 +96,7 @@ private class Server(cfgLoader: ServerConfigLoader) {
         }
 
         if (cfg.hasLibExtDir()) {
-            Files.newDirectoryStream(cfg.libExtDir.toPath()!!, "*.jar")!!.forEach { extJar ->
+            Files.newDirectoryStream(cfg.libExtDir, "*.jar")!!.forEach { extJar ->
                 jarFiles.add(extJar.toUri().toURL())
             }
         }
@@ -143,7 +143,7 @@ private class Server(cfgLoader: ServerConfigLoader) {
         })
 
         if (warCopyFailed) {
-            log.error("The WAR file ${solrWar.getAbsolutePath()} could not be copied to temp directory")
+            log.error("The WAR file ${solrWar} could not be copied to temp directory")
             throw RuntimeException("Server cannot start.")
         }
 

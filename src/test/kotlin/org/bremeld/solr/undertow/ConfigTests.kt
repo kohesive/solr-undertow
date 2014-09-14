@@ -11,6 +11,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.nio.file.Paths
 
 class ConfigTests {
     val log = LoggerFactory.getLogger("ConfigTests")!!
@@ -26,7 +27,7 @@ class ConfigTests {
     fun loadConfigFile(hocon: String): ServerConfigLoader {
         val tempConfig = Files.createTempFile("UnitTest-ConfigTests", ".conf")
         Files.write(tempConfig, hocon.toByteArray(defaultCharset))
-        return ServerConfigLoader(tempConfig.toFile())
+        return ServerConfigLoader(tempConfig)
     }
 
     [Before] fun clearSystemProperties() {
@@ -108,8 +109,8 @@ class ConfigTests {
         val cfg = makeConfig(cfgHocon)
 
         assertEquals(testPort, cfg.httpClusterPort)
-        assertEquals(testHome, cfg.solrHome.toString())
-        assertEquals(testLogs, cfg.solrLogs.toString())
+        assertEquals(Paths.get(testHome), cfg.solrHome)
+        assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
         assertEquals(testPort.toString(), System.getProperty(SYS_PROP_JETTY_PORT))
         assertEquals(testHome, System.getProperty(SYS_PROP_SOLRHOME))
@@ -129,8 +130,8 @@ class ConfigTests {
         val cfg = makeEmptyConfig()
 
         assertEquals(testPort, cfg.httpClusterPort)
-        assertEquals(File(testHome), cfg.solrHome)
-        assertEquals(File(testLogs), cfg.solrLogs)
+        assertEquals(Paths.get(testHome), cfg.solrHome)
+        assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
         assertEquals(testPort.toString(), System.getProperty(SYS_PROP_JETTY_PORT))
         assertEquals(testHome, System.getProperty(SYS_PROP_SOLRHOME))
