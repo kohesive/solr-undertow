@@ -1,7 +1,7 @@
 solr-undertow
 =============
 
-Solr running in standalone server - High Performance, tiny, fast, easy, standalone deployment.  Requires JDK 1.7 or newer.  Less than 4MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as crazy as Scala).
+Solr running in standalone server - High Performance, tiny, fast, easy, standalone deployment.  Requires JDK 1.7 or newer, Solr 4.1 or newer.  Less than 4MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
 
 Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub.
 
@@ -117,6 +117,9 @@ You may download a release under the releases here, or you can build your own bi
 
 and the resulting binary will be under `./build/distributions` as a .tgz file.  To build a zip, use `distZip` instead of `distTar`
 
+#### Building with IntelliJ
+
+Load the build.gradle as a project, accept the default Gradle wrapper, and then fixup JDK to be 1.7 or newer.  Be sure you have Kotlin plugin installed, check the [gradle.properties file](https://github.com/bremeld/solr-undertow/blob/master/gradle.properties) for Kotlin version number.
 
 
 
