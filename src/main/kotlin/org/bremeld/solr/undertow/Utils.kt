@@ -19,6 +19,7 @@ import java.nio.file.Path
 import java.io.File
 import com.typesafe.config.Config
 import java.nio.file.Paths
+import org.slf4j.Logger
 
 private fun printErrorAndExit(msg: String?, errCode: Int = -1) {
   System.err.println(msg ?: "Unknown Error")
@@ -56,6 +57,7 @@ private fun <T> T.then(initWith: (T) -> Unit): T {
 private fun Config.plus(fallback: Config): Config = this.withFallback(fallback)!!
 private fun Config.value(key: String): ConfiguredValue = ConfiguredValue(this, key)
 private fun Config.nested(key: String): Config = this.getConfig(key)!!
+private fun Config.render(): String = this.root()!!.render()!!
 
 private class ConfiguredValue(val cfg: Config, val key: String) {
     fun asPath(): Path = Paths.get(cfg.getString(key)!!.trim())!!.toAbsolutePath()
@@ -64,6 +66,8 @@ private class ConfiguredValue(val cfg: Config, val key: String) {
     fun asInt(): Int = cfg.getInt(key)
     fun asStringList(): List<String> = cfg.getStringList(key)!!
     fun asStringArray(): Array<String> = cfg.getStringList(key)!!.copyToArray()
+    fun asDefaultedStringList(default: List<String>): List<String> = if (exists()) asStringList() else default
+    fun asGuaranteedStringList(): List<String> = if (exists()) asStringList() else listOf()
 
     fun isZero(): Boolean = asInt() == 0
 
@@ -78,4 +82,6 @@ private fun Int.minimum(minVal: Int): Int = Math.max(this, minVal)
 private fun Int.maximum(maxVal: Int): Int = Math.min(this, maxVal)
 private fun Int.coerce(minVal: Int, maxVal: Int) = this.minimum(minVal).maximum(maxVal)
 private fun Int.coerce(range: IntRange) = this.minimum(range.start).maximum(range.end)
+
+private inline fun Logger.debug(foo: ()->String): Unit = if (this.isDebugEnabled()) this.debug(foo())
 
