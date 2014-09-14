@@ -1,5 +1,5 @@
 Tuning Solr-Undertow
-####################
+====================
 
 There are not many tunable paremeters, mostly the IO and Worker threads, the JDK Gabage Collection, the Directory implementation used by Solr, and JMV Heap Sizes.
 
@@ -9,11 +9,16 @@ Use JDK 1.7 or 1.8 and start with no garbage collection parameters.  Trust G1 un
 
 Watch for JVM heaps that are larger than needed.  Start with a good size heap, monitor with JConsole to see where the heap size is after GC, and give it some head room for transient data used during queries.  Better to start high and tune downwards.
 
-#### httpIoThreads
+#### httpIoThreads and httpWorkerThreads
 
-This should range between `2` and number of `CPU cores * 2` at most.  The default of `CPU cores * 1` is usually sufficiently high.
+The following settings are defaulted as:
 
-#### httpWorkerThreads
+|Setting|Default|
+|---|---|
+|httpIoThreads|number of system cores, as returned by Runtime.getRuntime().availableProcessors()|
+|httpWorkerThreads|8 * number of system cores|
+
+It is rare that you would ever adjust `httpIoThreads` (between `2` and `CPU cores * 2`).  The front-end of this server uses non-blocking IO and all IO is done separately from the worker threads.  Therefore be conservative with your thread count.  Start with the defaults, go upwards if not using all CPU, and downwards until CPU hovers below 90% (plus more headroom to allow for index commits and warming new searchers using CPU). 
 
 For `httpWorkerThreads` you should *be conservative* but not starve Solr either.  In the Solr distribution, you see that Jetty is configured with a max worker thread count of *10,000*.  **Do not immediately jump to this setting.**  Some user accounts have a file handle limit that this could exceed causing issues.  And this is an excesively high number.  It is best to test your performance and CPU usage, and set the worker threads to a value that protects you from a "train wreck" where your CPU is overloaded and performance degrades dramatically.  Find a value that keeps your CPU from max, leave head room for commits and index warming, and let the `httpWorkerThreads` keep the system from overloading, while having enough to maximize throughput.  Find the sweet spot by running typical load with something like [JMeter](http://jmeter.apache.org) that puts CPU above 90%, then lowering the worker threads until CPU drops to whatever maximum is safe for your envirionment.  It is better to queue users or reject them than to crush and kill your Solr instance.
 
