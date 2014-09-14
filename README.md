@@ -84,8 +84,6 @@ Other Notes
 
 **Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Oracle JDK is also prefered, Open JDK does not perform as well and at times has been incompatible.  
 
-**see also:** [Tuning Solr-Undertow](./TUNING.MD)
-
 #### Solr WAR Files
 
 **You can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.0 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.0/solr-4.10.0.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
@@ -177,7 +175,7 @@ and the resulting binaries will be under `./build/distributions` as .tgz files.
 
 #### Building with IntelliJ
 
-Load the build.gradle as a project, accept the default Gradle wrapper, and then fixup JDK to be 1.7 or newer.  Be sure you have Kotlin plugin installed, check the [gradle.properties file](./gradle.properties) for Kotlin version number.
+Open the `build.gradle` file as a project, accept the default Gradle wrapper, and then fixup JDK to be 1.7 or newer.  Be sure you have Kotlin plugin installed and that it matches the version in the Gradle build, check the [gradle.properties file](./gradle.properties) for Kotlin version number.
 
 
 
