@@ -47,6 +47,10 @@ public class Server(cfgLoader: ServerConfigLoader) {
             cfg.print()
 
             val solrWarDeployment = deployWarFileToCache(cfg.solrWarFile)
+            if (!solrWarDeployment.successfulDeploy) {
+                return ServerStartupStatus(false, "WAR file failed to deploy, terminating server")
+            }
+
             val ioThreads = Math.max(1, if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads)
             val workerThreads = if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads
 
@@ -68,12 +72,12 @@ public class Server(cfgLoader: ServerConfigLoader) {
 
             return ServerStartupStatus(true, "OK")
         } catch (ex: Throwable) {
-            log.error("Server unhandled exception during startup '${ex.getMessage()}'", ex)
+            log.error("Server unhandled exception during startup '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
             return ServerStartupStatus(false, "Server unhandled exception during startup '${ex.getMessage()}'")
         }
     }
 
-    private data class DeployedWarInfo(val cacheDir: Path, val htmlDir: Path, val libDir: Path, val classLoader: URLClassLoader)
+    private data class DeployedWarInfo(val successfulDeploy: Boolean, val cacheDir: Path, val htmlDir: Path, val libDir: Path, val classLoader: ClassLoader)
 
     private fun deployWarFileToCache(solrWar: Path): DeployedWarInfo {
         log.info("Extracting WAR file: ${solrWar}")
@@ -87,14 +91,21 @@ public class Server(cfgLoader: ServerConfigLoader) {
         Files.createDirectories(tempDirHtml)
         Files.createDirectories(tempDirJars)
 
+        val FAILED_DEPLOYMENT = DeployedWarInfo(false, tempDirThisSolr, tempDirHtml, tempDirJars, ClassLoader.getSystemClassLoader()!!)
+
         val warUri = URI.create("jar:file:${solrWar}")
-        val warJarFs = FileSystems.newFileSystem(warUri, mapOf("create" to "false"))!!
+        val warJarFs = try {
+            FileSystems.newFileSystem(warUri, mapOf("create" to "false"))!!
+        } catch (ex: Throwable) {
+            log.error("The WAR file ${solrWar} cannot be opened as a Zip file, due to '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
+            return FAILED_DEPLOYMENT
+        }
         val warLibPath = warJarFs.getPath("/WEB-INF/lib/")
         val warRootPath = warJarFs.getPath("/")
 
         if (!Files.exists(warLibPath) || !Files.isDirectory(warLibPath)) {
             log.error("The WAR file ${solrWar} does not contain WEB-INF/lib/ directory for the classpath jars")
-            throw RuntimeException("Server cannot start.")
+            return FAILED_DEPLOYMENT
         }
 
         val jarFiles = ArrayList<URL>()
@@ -144,8 +155,8 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 Files.copy(file, destination, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
                 return FileVisitResult.CONTINUE
             }
-            override fun visitFileFailed(file: Path?, exc: IOException?): FileVisitResult? {
-                log.error("Unable to copy from WAR to temp directory, file ${file!!.toAbsolutePath().toString()}", exc!!)
+            override fun visitFileFailed(file: Path?, ex: IOException?): FileVisitResult? {
+                log.error("Unable to copy from WAR to temp directory, file ${file!!.toAbsolutePath().toString()}, due to '${ex?.getMessage() ?: ex?.javaClass?.getName() ?: "unknown"}'", ex)
                 warCopyFailed = true
                 return FileVisitResult.TERMINATE
             }
@@ -153,10 +164,10 @@ public class Server(cfgLoader: ServerConfigLoader) {
 
         if (warCopyFailed) {
             log.error("The WAR file ${solrWar} could not be copied to temp directory")
-            throw RuntimeException("Server cannot start.")
+            return FAILED_DEPLOYMENT
         }
 
-        return DeployedWarInfo(tempDirThisSolr, tempDirHtml, tempDirJars, URLClassLoader(jarFiles.copyToArray(), ClassLoader.getSystemClassLoader()))
+        return DeployedWarInfo(true, tempDirThisSolr, tempDirHtml, tempDirJars, URLClassLoader(jarFiles.copyToArray(), ClassLoader.getSystemClassLoader()))
     }
 
     private fun buildSolrServletHandler(solrWarDeployment: DeployedWarInfo): HttpHandler {
