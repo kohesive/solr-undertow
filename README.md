@@ -84,7 +84,7 @@ Other Notes
 
 **Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Oracle JDK is also prefered, Open JDK does not perform as well and at times has been incompatible.  
 
-**see also: [Tuning Solr-Undertow](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
+**see also:** [Tuning Solr-Undertow](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
 
 #### Solr WAR Files
 
@@ -110,7 +110,7 @@ export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256
 
 #### HTTP IO and Worker threads
 
-**see also: [Tuning Solr-Undertow](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
+**see also:** [Tuning Solr-Undertow](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
  
 Building Your Own Binary
 ========
