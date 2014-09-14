@@ -176,10 +176,10 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
         if (hasLibExtDir()) {
             printF(::libExtDir)
         }
-        if (log.isDebugEnabled()) {
-            log.debug("<<<< CONFIGURATION FILE TRACE >>>>")
-            log.debug(configured.root()!!.render())
-        }
+
+        log.debug { "<<<< CONFIGURATION FILE TRACE >>>>" }
+        log.debug { configured.render() }
+
         log.info("=== [ END CONFIG ] ===")
 
 
@@ -232,10 +232,10 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
 
 
 public class RequestLimitConfig(private val log: Logger, val name: String, private val cfg: Config) {
-    val exactPaths = if (cfg.hasPath("exactPaths")) cfg.getStringList("exactPaths")!! else listOf<String>()
-    val pathSuffixes = if (cfg.hasPath("pathSuffixes")) cfg.getStringList("pathSuffixes")!! else listOf<String>()
-    val concurrentRequestLimit = cfg.getInt("concurrentRequestLimit").minimum(-1)
-    val maxQueuedRequestLimit = cfg.getInt("maxQueuedRequestLimit").minimum(-1)
+    val exactPaths = cfg.value("exactPaths").asGuaranteedStringList()
+    val pathSuffixes = cfg.value("pathSuffixes").asGuaranteedStringList()
+    val concurrentRequestLimit = cfg.value("concurrentRequestLimit").asInt().minimum(-1)
+    val maxQueuedRequestLimit = cfg.value("maxQueuedRequestLimit").asInt().minimum(-1)
 
 
     fun validate(): Boolean {
@@ -250,7 +250,7 @@ public class RequestLimitConfig(private val log: Logger, val name: String, priva
         log.info("  ${name} >>")
         log.info("    exactPaths: ${exactPaths.joinToString(",")}")
         log.info("    pathSuffixes: ${pathSuffixes.joinToString(",")}")
-        log.info("    concurrentRequestLimit: ${if (concurrentRequestLimit < 0) "unlimited" else Math.min(concurrentRequestLimit, 1) }")
+        log.info("    concurrentRequestLimit: ${if (concurrentRequestLimit < 0) "unlimited" else concurrentRequestLimit.minimum(1) }")
         log.info("    maxQueuedRequestLimit: ${if (maxQueuedRequestLimit < 0) "unlimited" else maxQueuedRequestLimit }")
     }
 }
