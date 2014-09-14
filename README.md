@@ -48,7 +48,7 @@ Two example configurations are provided in the [example directory](https://githu
 
 #### System Properties
 
-Settings from the configuration file will be overriden by system properties of the same fully qualified name (i.e. `solr.undertow.zkHost`) but also by the standard Solr system property used with Jetty (i.e. `zkHost` or `jetty.Port`). The following typical Solr system properties are recognized, and also set by the system so that any Solr configuration file using variable substitution will find them as expected:
+Settings from the configuration file will be overriden by system properties of the same fully qualified name (i.e. `solr.undertow.zkHost`) but also by the standard Solr system property used with Jetty (i.e. `zkHost` or `jetty.Port`). The following Solr system properties are recognized, and are also set by solr-undertow so that any Solr configuration file using variable substitution will find them as expected:
 
 |Solr typical|Solr-Undertow Equivalent|
 |---|---|
@@ -60,14 +60,14 @@ Settings from the configuration file will be overriden by system properties of t
 |solr.solr.home|solrHome|
 |solr.data.dir|(no equivalent, not checked, passes through to Solr)|
 
-The Solr Typical setting overrides the solr-undertow equivalent system property, which overrides the same value from the configuration file.  You only need to provide one (preferably the solr-undertow version) and the other will be set to match.
+The solr-undertow has priority if both are present in system properties; you only need to provide one and the other will be made to match.
 
 Other Notes
 ===========
 
 #### JDK 1.7
 
-**Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Start with default settings for garbage collection, and tune from there if needed at all. 
+**Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Oracle JDK is also prefered, Open JDK does not do as well with memory management, and has at different releases had different incompatibilities.  Start with clearing settings for garbage collection, and tune from there if needed.
 
 #### Solr WAR Files
 
