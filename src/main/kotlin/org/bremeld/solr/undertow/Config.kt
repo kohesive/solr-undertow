@@ -47,6 +47,9 @@ private val OUR_PROP_SOLRHOME = "solrHome"
 
 private val SYS_PROP_JBOSS_LOGGING = "org.jboss.logging.provider"
 
+private val OUR_PROP_HTTP_IO_THREADS = "httpIoThreads"
+private val OUR_PROP_HTTP_WORKER_THREADS = "httpWorkerThreads"
+
 // system and environment variables that need to be treated the same as our configuration items (excluding zkRun)
 private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_ZKHOST to OUR_PROP_ZKHOST,
@@ -117,8 +120,8 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
 
     val httpClusterPort = configured.value(OUR_PROP_HTTP_PORT).asInt()
     val httpHost = configured.value("httpHost").asString()
-    val httpIoThreads = configured.value("httpIoThreads").asInt().minimum(0)
-    val httpWorkerThreads = configured.value("httpWorkerThreads").asInt().minimum(0)
+    val httpIoThreads = configured.value(OUR_PROP_HTTP_IO_THREADS).asInt().minimum(0)
+    val httpWorkerThreads = configured.value(OUR_PROP_HTTP_WORKER_THREADS).asInt().minimum(0)
     val activeRequestLimits = configured.value("activeRequestLimits").asStringArray()
     val requestLimiters = HashMap<String, RequestLimitConfig>() initializedBy { requestLimiters ->
         val namedConfigs = configured.nested("requestLimits")
