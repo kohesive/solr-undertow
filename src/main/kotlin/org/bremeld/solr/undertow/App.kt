@@ -13,26 +13,31 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-package org.collokia.solr.undertow
+package org.bremeld.solr.undertow
 
 import java.io.File
 
 public fun main(args: Array<String>) {
     try {
-        val configFile = if (args.size == 1) File(args[0]) else null
-        if (configFile == null) {
+        if (args.size != 1) {
             System.err.println("A Configuration file must be passed on the command-line (i.e. /my/path/to/solr-undertow.conf)")
             System.exit(-1)
         }
-        if (!configFile!!.exists()) {
-            System.err.println("Configuration file does not exist: ${configFile.getAbsolutePath()}")
-            System.exit(-1)
+        val configFile = File(args[0]) verifiedBy { file ->
+            if (!file.exists()) {
+                System.err.println("Configuration file does not exist: ${file.getAbsolutePath()}")
+                System.exit(-1)
+            }
         }
 
         // load/parse configuration separate from building the ServerConfig object, so that logging is configured before
         // we need it...
-        val configLoader = ServerConfigLoader(configFile)
-        configLoader.fixupLogging()
+        val configLoader = ServerConfigLoader(configFile) verifiedBy { configLoader ->
+            if (!configLoader.hasLoggingDir()) {
+                System.err.println("solr.undertow.solrLogs is missing from configFile, is required for logging")
+                System.exit(-1)
+            }
+        }
 
         Server(configLoader).run()
 

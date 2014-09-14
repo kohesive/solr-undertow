@@ -13,7 +13,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-package org.collokia.solr.undertow
+package org.bremeld.solr.undertow
 
 import kotlin.reflect.KMemberProperty
 import com.typesafe.config.Config
@@ -22,6 +22,7 @@ import org.slf4j.Logger
 import java.io.File
 import java.nio.file.Files
 import java.util.HashMap
+import java.util.Properties
 
 private val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
 
@@ -29,10 +30,10 @@ private val SYS_PROP_JETTY_PORT = "jetty.port"
 private val OUR_PROP_HTTP_PORT = "httpClusterPort"
 
 private val SYS_PROP_ZKRUN = "zkRun"
-private val OUR_PROP_ZKRUN = SYS_PROP_ZKRUN
+private val OUR_PROP_ZKRUN = "zkRun"
 
 private val SYS_PROP_ZKHOST = "zkHost"
-private val OUR_PROP_ZKHOST = SYS_PROP_ZKHOST
+private val OUR_PROP_ZKHOST = "zkHost"
 
 private val SYS_PROP_SOLRLOG = "solr.log"
 private val OUR_PROP_SOLRLOG = "solrLogs"
@@ -43,107 +44,82 @@ private val OUR_PROP_HOSTCONTEXT = "solrContextPath"
 private val SYS_PROP_SOLRHOME = "solr.solr.home"
 private val OUR_PROP_SOLRHOME = "solrHome"
 
+// system and environment variables that need to be treated the same as our configuration items (excluding zkRun)
+private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
+        SYS_PROP_ZKHOST to OUR_PROP_ZKHOST,
+        SYS_PROP_SOLRLOG to OUR_PROP_SOLRLOG,
+        SYS_PROP_HOSTCONTEXT to OUR_PROP_HOSTCONTEXT,
+        SYS_PROP_SOLRHOME to OUR_PROP_SOLRHOME)
+
 private class ServerConfigLoader(val configFile: File) {
-    private val propertyOverrides = ConfigFactory.defaultOverrides()!!
-    private val propertyDefaults = ConfigFactory.defaultReference()!!
-    private val ourRawConfig = ConfigFactory.parseFile(configFile)!!
-    val resolvedConfig = run {
-        propertyOverrides.withFallback(ourRawConfig)!!.withFallback(propertyDefaults)!!.resolve()!!
+    private val solrOverrides = run {
+        // copy values from typical Solr system or environment properties into our equivalent configuration item
+        val p = Properties()
+        for (mapping in SOLR_OVERRIDES.entrySet()) {
+            val value = System.getProperty(mapping.key) ?: System.getenv(mapping.key)
+            if (value != null) {
+                p.put("${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}", value)
+            }
+        }
+        if (System.getProperty(SYS_PROP_ZKRUN) ?: System.getenv(SYS_PROP_ZKRUN) != null) {
+            p.put("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}", "true")
+        }
+        ConfigFactory.parseProperties(p)!!
     }
 
-    fun fixupLogging() {
-        System.setProperty("org.jboss.logging.provider", "slf4j")
+    val resolvedConfig = solrOverrides.withFallback(ConfigFactory.systemProperties())!!
+            .withFallback(ConfigFactory.systemEnvironment())!!
+            .withFallback(ConfigFactory.parseFile(configFile)!!)!!
+            .withFallback(ConfigFactory.defaultReference()!!)!!.resolve()!!
+            .then { config ->
+                // copy our configuration items into Solr system properties that might be looked for later by Solr
+                for (mapping in SOLR_OVERRIDES.entrySet()) {
+                    val configValue = config.getString("${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}")!!.trim()
+                    if (configValue.isNotEmpty()) {
+                        System.setProperty(mapping.key, configValue)
+                    }
+                }
+                if (config.getBoolean("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}")) {
+                    System.setProperty(SYS_PROP_ZKRUN, "true")
+                }
 
-        if (!resolvedConfig.hasPath("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLRLOG}")) {
-            System.err.println("solr.undertow.solrLogs is missing from configFile, is required for logging")
-            System.exit(-1)
-        }
+                // an extra system property to set
+                System.setProperty("org.jboss.logging.provider", "slf4j")
 
-        System.setProperty(SYS_PROP_SOLRLOG, resolvedConfig.getString("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLRLOG}")!!)
+            }
+
+    fun hasLoggingDir(): Boolean {
+       return resolvedConfig.hasPath("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLRLOG}")
     }
 }
 
 private class ServerConfig(private val log: Logger, private val loader: ServerConfigLoader) {
     val cfg = loader.resolvedConfig.getConfig(SOLR_UNDERTOW_CONFIG_PREFIX)!!
-
-    val httpClusterPort = run {
-        // Solr configuration files reference this port by default, so let's set it in case they haven't been customized
-        val temp = System.getProperty(SYS_PROP_JETTY_PORT) ?: cfg.getString(OUR_PROP_HTTP_PORT)!!
-        System.setProperty(SYS_PROP_JETTY_PORT, temp)
-        temp.toInt()
-    }
-
+    val httpClusterPort = cfg.getInt(OUR_PROP_HTTP_PORT)
     val httpHost = cfg.getString("httpHost")!!
     val httpIoThreads = Math.max(cfg.getInt("httpIoThreads"), 0)
     val httpWorkerThreads = Math.max(cfg.getInt("httpWorkerThreads"), 0)
-
     val activeRequestLimits = cfg.getStringList("activeRequestLimits")!!.copyToArray()
-
-    val requestLimiters = run {
+    val requestLimiters = HashMap<String, RequestLimitConfig>() initializedBy { requestLimiters ->
         val namedConfigs = cfg.getConfig("requestLimits")!!
-        val temp = HashMap<String, RequestLimitConfig>()
         activeRequestLimits.forEach { name ->
-            temp.put(name, RequestLimitConfig(log, name, namedConfigs.getConfig(name)!!))
+            requestLimiters.put(name, RequestLimitConfig(log, name, namedConfigs.getConfig(name)!!))
         }
-        temp
     }
-
-    val solrHome = run {
-        // SOLR references solr.solr.home in config files by default, so set the variable to match our configuration
-        val temp = File(cfg.getString(OUR_PROP_SOLRHOME)!!)
-        System.setProperty(SYS_PROP_SOLRHOME, temp.getAbsolutePath())
-        temp
-    }
-
-    val solrLogs = run {
-        // Log configuration references solr.log, so set the variable to match our configuration
-        val temp = File(cfg.getString(OUR_PROP_SOLRLOG)!!)
-        System.setProperty(SYS_PROP_SOLRLOG, temp.getAbsolutePath())
-        temp
-    }
-
+    val zkRun = cfg.getBoolean(OUR_PROP_ZKRUN)
+    val zkHost = cfg.getString(OUR_PROP_ZKHOST)!!
+    val solrHome = File(cfg.getString(OUR_PROP_SOLRHOME)!!)
+    val solrLogs = File(cfg.getString(OUR_PROP_SOLRLOG)!!)
     val tempDir = File(cfg.getString("tempDir")!!)
-
     val solrVersion = cfg.getString("solrVersion")!!
-
     val solrWarFile = File(cfg.getString("solrWarFile")!!)
-
-    val solrContextPath = run {
-        var contextPathValue = System.getProperty(SYS_PROP_HOSTCONTEXT) ?: cfg.getString(OUR_PROP_HOSTCONTEXT)!!
-        System.setProperty(SYS_PROP_HOSTCONTEXT, contextPathValue.trimSlashes())
-        if (contextPathValue.isEmpty()) {
-           contextPathValue = "/"
-        }
-        contextPathValue
-    }
-
     val libExtDirName = cfg.getString("libExtDir")!!.trim()
     val libExtDir = File(libExtDirName)
+    val solrContextPath = cfg.getString(OUR_PROP_HOSTCONTEXT)!!.trim() let { solrContextPath ->
+        if (solrContextPath.isEmpty()) "/" else solrContextPath
+    }
+
     fun hasLibExtDir(): Boolean = libExtDirName.isNotEmpty()
-
-    val zkRun = run {
-        // SOLR looks for zkRun system property, so we can use it if set, and also set it from  our config
-        val sysZkRun = if (System.getProperty(SYS_PROP_ZKRUN) != null) true else false
-
-        val zkRunValue = sysZkRun || cfg.getBoolean(OUR_PROP_ZKRUN)
-        if (zkRunValue) {
-            System.setProperty(SYS_PROP_ZKRUN, "true")
-        } else {
-            System.clearProperty(SYS_PROP_ZKRUN)
-        }
-        zkRunValue
-    }
-
-    val zkHost = run {
-        // SOLR looks for zkHost system property, so we can use it if set, and also set it from  our config
-        val zkHostValue = System.getProperty(SYS_PROP_ZKHOST) ?: cfg.getString(OUR_PROP_ZKHOST)!!
-        if (zkHostValue.trim().isNotEmpty()) {
-            System.setProperty(SYS_PROP_ZKHOST, zkHostValue)
-        } else {
-            System.clearProperty(SYS_PROP_ZKHOST)
-        }
-        zkHostValue
-    }
 
     private fun printF(p: KMemberProperty<ServerConfig, File>) = log.info("  ${p.name}: ${p.get(this).getAbsolutePath()}")
     private fun printS(p: KMemberProperty<ServerConfig, String>) = log.info("  ${p.name}: ${p.get(this)}")

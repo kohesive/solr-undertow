@@ -13,7 +13,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-package org.collokia.solr.undertow
+package org.bremeld.solr.undertow
 
 import kotlin.properties.Delegates
 import io.undertow.servlet.*
@@ -45,7 +45,6 @@ private class Server(cfgLoader: ServerConfigLoader) {
         cfg.print()
 
         val solrWarDeployment = deployWarFileToCache(cfg.solrWarFile)
-
         val ioThreads = Math.max(1, if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads)
         val workerThreads = if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads
 
@@ -60,6 +59,7 @@ private class Server(cfgLoader: ServerConfigLoader) {
         server.start()
 
         log.info("Initializing Solr")
+        // trigger a Solr servlet so that Solr is loaded, connects to cluster, et al
         URL("http://${cfg.httpHost}:${cfg.httpClusterPort}/solr/#/").readBytes()
         log.info("!!!! SERVER READY:  Solr has started and finished startup/cluster processing !!!!")
     }
@@ -68,8 +68,6 @@ private class Server(cfgLoader: ServerConfigLoader) {
 
     private fun deployWarFileToCache(solrWar: File): DeployedWarInfo {
         log.info("Extracting WAR file: ${solrWar.getAbsolutePath()}")
-
-        // extract war file into version specific directory...
 
         val tempDirThisSolr = File(cfg.tempDir, cfg.solrVersion).toPath()!!
         val tempDirHtml = tempDirThisSolr.resolve("html-root")!!

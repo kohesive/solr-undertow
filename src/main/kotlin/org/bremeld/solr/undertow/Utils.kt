@@ -13,7 +13,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-package org.collokia.solr.undertow
+package org.bremeld.solr.undertow
 
 import java.nio.file.Path
 import java.io.File
@@ -40,4 +40,19 @@ private fun String.trimSlashes(): String {
         temp = temp.substring(0,temp.length()-1)
     }
     return temp
+}
+
+private fun <T> T.verifiedBy(verifyWith: (T) -> Unit): T {
+    verifyWith(this)
+    return this
+}
+
+private fun <T> T.initializedBy(initWith: (T) -> Unit): T {
+    initWith(this)
+    return this
+}
+
+private fun <T> T.then(initWith: (T) -> Unit): T {
+    initWith(this)
+    return this
 }
