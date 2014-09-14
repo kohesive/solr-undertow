@@ -137,4 +137,44 @@ class ConfigTests {
         assertEquals(testHome, System.getProperty(SYS_PROP_SOLRHOME))
         assertEquals(testLogs, System.getProperty(SYS_PROP_SOLRLOG))
     }
+
+    [Test] fun testThreadMinimum() {
+        run {
+            val cfgHocon = """
+                    ${SOLR_UNDERTOW_CONFIG_PREFIX} {
+                        ${OUR_PROP_HTTP_IO_THREADS} = -1
+                        ${OUR_PROP_HTTP_WORKER_THREADS} = -3
+                    }
+                  """
+            val cfg = makeConfig(cfgHocon)
+            assertEquals(0, cfg.httpIoThreads)
+            assertEquals(0, cfg.httpWorkerThreads)
+        }
+
+        run {
+            val cfgHocon = """
+                    ${SOLR_UNDERTOW_CONFIG_PREFIX} {
+                        ${OUR_PROP_HTTP_IO_THREADS} = 0
+                        ${OUR_PROP_HTTP_WORKER_THREADS} = 0
+                    }
+                  """
+            val cfg = makeConfig(cfgHocon)
+            assertEquals(0, cfg.httpIoThreads)
+            assertEquals(0, cfg.httpWorkerThreads)
+        }
+
+        run {
+            val cfgHocon = """
+                    ${SOLR_UNDERTOW_CONFIG_PREFIX} {
+                        ${OUR_PROP_HTTP_IO_THREADS} = 1
+                        ${OUR_PROP_HTTP_WORKER_THREADS} = 3
+                    }
+                  """
+            val cfg = makeConfig(cfgHocon)
+            assertEquals(1, cfg.httpIoThreads)
+            assertEquals(3, cfg.httpWorkerThreads)
+        }
+
+
+    }
 }
