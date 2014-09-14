@@ -21,8 +21,7 @@ import java.nio.file.Files
 public fun main(args: Array<String>) {
     try {
         if (args.size != 1) {
-            System.err.println("A Configuration file must be passed on the command-line (i.e. /my/path/to/solr-undertow.conf)")
-            System.exit(-1)
+            printErrorAndExit("A Configuration file must be passed on the command-line (i.e. /my/path/to/solr-undertow.conf)")
         }
         val configFile = Paths.get(args[0])!!.toAbsolutePath() verifiedBy { path ->
             if (!Files.exists(path)) {
@@ -35,15 +34,17 @@ public fun main(args: Array<String>) {
         // we need it...
         val configLoader = ServerConfigLoader(configFile) verifiedBy { configLoader ->
             if (!configLoader.hasLoggingDir()) {
-                System.err.println("solr.undertow.solrLogs is missing from configFile, is required for logging")
-                System.exit(-1)
+                printErrorAndExit("solr.undertow.solrLogs is missing from configFile, is required for logging")
             }
         }
 
-        Server(configLoader).run()
+        val (serverStarted, message) = Server(configLoader).run()
+        if (!serverStarted) {
+            printErrorAndExit(message)
+        }
 
     } catch (ex: Throwable) {
         ex.printStackTrace()
-        System.exit(-1)
+        printErrorAndExit(ex.getMessage())
     }
 }

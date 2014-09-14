@@ -20,6 +20,11 @@ import java.io.File
 import com.typesafe.config.Config
 import java.nio.file.Paths
 
+private fun printErrorAndExit(msg: String?, errCode: Int = -1) {
+  System.err.println(msg ?: "Unknown Error")
+  System.exit(errCode)
+}
+
 private fun deleteRecursive(p: Path): Unit {
     deleteRecursive(p.toFile())
 }

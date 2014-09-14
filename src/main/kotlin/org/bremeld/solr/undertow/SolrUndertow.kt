@@ -31,37 +31,46 @@ import java.io.*
 import javax.servlet.*
 import org.slf4j.LoggerFactory
 
+public data class ServerStartupStatus(val started: Boolean, val errorMessage: String)
+
 public class Server(cfgLoader: ServerConfigLoader) {
     val log = LoggerFactory.getLogger("SolrServer")!!
     val cfg by Delegates.lazy { ServerConfig(log, cfgLoader) }
 
-    public fun run() {
+    public fun run(): ServerStartupStatus {
         log.warn("Solr + Undertow = small server, happy days, fast, and maybe other cool things.")
-        log.warn("Starting SolrServer")
-        if (!cfg.validate()) {
-            log.error("Configuration is not valid, terminating server")
-            System.exit(-1)
+        try {
+            log.warn("Starting SolrServer")
+            if (!cfg.validate()) {
+                return ServerStartupStatus(false, "Configuration is not valid, terminating server")
+            }
+            cfg.print()
+
+            val solrWarDeployment = deployWarFileToCache(cfg.solrWarFile)
+            val ioThreads = Math.max(1, if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads)
+            val workerThreads = if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads
+
+            val server = Undertow.builder()!!
+                    .addHttpListener(cfg.httpClusterPort, cfg.httpHost)!!
+                    .setDirectBuffers(true)!!
+                    .setHandler(buildSolrServletHandler(solrWarDeployment))!!
+                    .setIoThreads(ioThreads)!!
+                    .setWorkerThreads(workerThreads)!!
+                    .build()!!
+
+            server.start()
+            log.info("Undertow started")
+
+            log.info("Initializing Solr")
+            // trigger a Solr servlet so that Solr is loaded, connects to cluster, et al
+            URL("http://${cfg.httpHost}:${cfg.httpClusterPort}/solr/#/").readBytes()
+            log.info("!!!! SERVER READY:  Solr has started and finished startup/cluster processing !!!!")
+
+            return ServerStartupStatus(true, "OK")
+        } catch (ex: Throwable) {
+            log.error("Server unhandled exception during startup '${ex.getMessage()}'", ex)
+            return ServerStartupStatus(false, "Server unhandled exception during startup '${ex.getMessage()}'")
         }
-        cfg.print()
-
-        val solrWarDeployment = deployWarFileToCache(cfg.solrWarFile)
-        val ioThreads = Math.max(1, if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads)
-        val workerThreads = if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads
-
-        val server = Undertow.builder()!!
-                .addHttpListener(cfg.httpClusterPort, cfg.httpHost)!!
-                .setDirectBuffers(true)!!
-                .setHandler(buildSolrServletHandler(solrWarDeployment))!!
-                .setIoThreads(ioThreads)!!
-                .setWorkerThreads(workerThreads)!!
-                .build()!!
-
-        server.start()
-
-        log.info("Initializing Solr")
-        // trigger a Solr servlet so that Solr is loaded, connects to cluster, et al
-        URL("http://${cfg.httpHost}:${cfg.httpClusterPort}/solr/#/").readBytes()
-        log.info("!!!! SERVER READY:  Solr has started and finished startup/cluster processing !!!!")
     }
 
     private data class DeployedWarInfo(val cacheDir: Path, val htmlDir: Path, val libDir: Path, val classLoader: URLClassLoader)
