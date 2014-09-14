@@ -24,6 +24,7 @@ import java.util.HashMap
 import java.util.Properties
 import com.typesafe.config.ConfigResolveOptions
 import java.nio.file.Path
+import org.slf4j.LoggerFactory
 
 private val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
 
@@ -56,6 +57,7 @@ private val OUR_PROP_SOLR_WAR = "solrWarFile"
 private val OUR_PROP_SOLR_VERSION = "solrVersion"
 private val OUR_PROP_TEMP_DIR = "tempDir"
 private val OUR_PROP_LIBEXT_DIR = "libExtDir"
+
 
 // system and environment variables that need to be treated the same as our configuration items
 private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
@@ -148,6 +150,10 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     val solrContextPath = configured.value(OUR_PROP_HOST_CONTEXT).asString() let { solrContextPath ->
         if (solrContextPath.isEmpty()) "/" else solrContextPath
     }
+
+    val accessLogFormat = configured.value("accessLogFormat").asString()
+    val accessLogger = LoggerFactory.getLogger("http.access")!!
+    val accessLogEnableRequestTiming = configured.value("accessLogEnableRequestTiming").asBoolean()
 
     fun hasLibExtDir(): Boolean = configured.value(OUR_PROP_LIBEXT_DIR).isNotEmptyString()
 

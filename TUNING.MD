@@ -17,10 +17,13 @@ The following settings are defaulted as:
 |---|---|
 |httpIoThreads|number of system cores, as returned by Runtime.getRuntime().availableProcessors()|
 |httpWorkerThreads|8 * number of system cores|
+|accessLogEnableRequestTiming|true|
 
 It is rare that you would ever adjust `httpIoThreads` (between `2` and `CPU cores * 2`).  The front-end of this server uses non-blocking IO and all IO is done separately from the worker threads. 
 
 For `httpWorkerThreads` you should *be conservative* but not starve Solr either.  In the Solr distribution, you see that Jetty is configured with a max worker thread count of *10,000*.  **Do not immediately jump to this setting.**  Some user accounts have a file handle limit that this could exceed causing issues.  And this is an excesively high number.  Therefore be conservative with your thread count.  Start with the defaults, go upwards if not using all CPU, and downwards until CPU hovers below 90% (plus more headroom to allow for index commits and warming new searchers using CPU).  Find the sweet spot by running typical load with something like [JMeter](http://jmeter.apache.org).  It is better to queue users or reject them than to crush and kill your Solr instance.
+
+The `accessLogEnableRequestTiming` option times the overall request time for each request for the access logs, and adds slight overhead, it can be set to false to squeeze out a bit more performance.
 
 **As a real-world example** for worker threads, we had a search cluster that a vendor for Solr support suggested should raise the thread count from 1000 to 10,000 to get more than 750 queries-per-second on a 6 node cluster (32 core, 64G memory), but running on solr-undertow the actual sweet spot on these boxes was `httpIoThreads` 16 (higher didn't help), and `httpWorkerThreads` 100 which along with other tuning changes brought the throughput to near 1600 queries per second, and with more manageable CPU that would not overload.  Hence 3.125 threads per core (6.25 per IO thread which is probably not relevant). Our default in solr-undertow would have been 256 which is too high for this use case, but let us see max CPU to tune downwards. 
 

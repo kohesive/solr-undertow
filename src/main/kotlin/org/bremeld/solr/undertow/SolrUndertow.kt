@@ -30,6 +30,9 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.io.*
 import javax.servlet.*
 import org.slf4j.LoggerFactory
+import io.undertow.server.handlers.accesslog.AccessLogHandler
+import io.undertow.server.handlers.accesslog.AccessLogReceiver
+import org.xnio.Options
 
 public data class ServerStartupStatus(val started: Boolean, val errorMessage: String)
 
@@ -54,12 +57,17 @@ public class Server(cfgLoader: ServerConfigLoader) {
             val ioThreads = Math.max(1, if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads)
             val workerThreads = if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads
 
+            val handler = AccessLogHandler(buildSolrServletHandler(solrWarDeployment), object : AccessLogReceiver {
+                    override fun logMessage(message: String?) { cfg.accessLogger.info(message) }
+                   }, cfg.accessLogFormat, javaClass<Server>().getClassLoader())
+
             val server = Undertow.builder()!!
                     .addHttpListener(cfg.httpClusterPort, cfg.httpHost)!!
                     .setDirectBuffers(true)!!
-                    .setHandler(buildSolrServletHandler(solrWarDeployment))!!
+                    .setHandler(handler)!!
                     .setIoThreads(ioThreads)!!
                     .setWorkerThreads(workerThreads)!!
+                    .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, cfg.accessLogEnableRequestTiming)!!
                     .build()!!
 
             server.start()
