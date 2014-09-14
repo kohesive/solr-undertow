@@ -17,6 +17,7 @@ package org.bremeld.solr.undertow
 
 import java.nio.file.Path
 import java.io.File
+import com.typesafe.config.Config
 
 private fun deleteRecursive(p: Path): Unit {
     deleteRecursive(p.toFile())
@@ -56,3 +57,6 @@ private fun <T> T.then(initWith: (T) -> Unit): T {
     initWith(this)
     return this
 }
+
+private fun Config.plus(fallback: Config): Config = this.withFallback(fallback)!!
+

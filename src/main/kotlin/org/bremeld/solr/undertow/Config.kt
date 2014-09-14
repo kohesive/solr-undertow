@@ -23,6 +23,7 @@ import java.io.File
 import java.nio.file.Files
 import java.util.HashMap
 import java.util.Properties
+import com.typesafe.config.ConfigResolveOptions
 
 private val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
 
@@ -44,6 +45,8 @@ private val OUR_PROP_HOSTCONTEXT = "solrContextPath"
 private val SYS_PROP_SOLRHOME = "solr.solr.home"
 private val OUR_PROP_SOLRHOME = "solrHome"
 
+private val SYS_PROP_JBOSS_LOGGING = "org.jboss.logging.provider"
+
 // system and environment variables that need to be treated the same as our configuration items (excluding zkRun)
 private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_ZKHOST to OUR_PROP_ZKHOST,
@@ -52,44 +55,60 @@ private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_SOLRHOME to OUR_PROP_SOLRHOME)
 
 private class ServerConfigLoader(val configFile: File) {
-    private val solrOverrides = run {
+    private val solrOverrides = ConfigFactory.parseProperties(getRelevantSystemProperties())!!
+    private val userConfig = ConfigFactory.parseFile(configFile)!!
+    private val fullConfig = solrOverrides + userConfig
+
+    val resolvedConfig = ConfigFactory.load(fullConfig, ConfigResolveOptions.noSystem())!! then { config ->
+        setRelevantSystemProperties(config)
+    }
+
+    fun hasLoggingDir(): Boolean {
+        return resolvedConfig.hasPath("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLRLOG}")
+    }
+
+    fun getRelevantSystemProperties(): Properties {
         // copy values from typical Solr system or environment properties into our equivalent configuration item
+
         val p = Properties()
         for (mapping in SOLR_OVERRIDES.entrySet()) {
-            val value = System.getProperty(mapping.key) ?: System.getenv(mapping.key)
-            if (value != null) {
-                p.put("${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}", value)
+            val cfgKey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}"
+            // don't override our own config item set as system property
+            if (System.getProperty(cfgKey) == null) {
+                val value = System.getProperty(mapping.key) ?: System.getenv(mapping.key)
+                if (value != null) {
+                    p.put(cfgKey, value)
+                }
             }
         }
         if (System.getProperty(SYS_PROP_ZKRUN) ?: System.getenv(SYS_PROP_ZKRUN) != null) {
-            p.put("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}", "true")
+            val cfgKey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}"
+            // don't override our own config item set as system property
+            if (System.getProperty(cfgKey) == null) {
+                p.put(cfgKey, "true")
+            }
         }
-        ConfigFactory.parseProperties(p)!!
+        return p
     }
 
-    val resolvedConfig = solrOverrides.withFallback(ConfigFactory.systemProperties())!!
-            .withFallback(ConfigFactory.systemEnvironment())!!
-            .withFallback(ConfigFactory.parseFile(configFile)!!)!!
-            .withFallback(ConfigFactory.defaultReference()!!)!!.resolve()!!
-            .then { config ->
-                // copy our configuration items into Solr system properties that might be looked for later by Solr
-                for (mapping in SOLR_OVERRIDES.entrySet()) {
-                    val configValue = config.getString("${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}")!!.trim()
-                    if (configValue.isNotEmpty()) {
-                        System.setProperty(mapping.key, configValue)
-                    }
+    fun setRelevantSystemProperties(fromConfig: Config) {
+        // copy our configuration items into Solr system properties that might be looked for later by Solr
+        for (mapping in SOLR_OVERRIDES.entrySet()) {
+            val cfgKey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}"
+            if (fromConfig.hasPath(cfgKey)) {
+                val configValue = fromConfig.getString(cfgKey)!!.trim()
+                if (configValue.isNotEmpty()) {
+                    System.setProperty(mapping.key, configValue)
                 }
-                if (config.getBoolean("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}")) {
-                    System.setProperty(SYS_PROP_ZKRUN, "true")
-                }
-
-                // an extra system property to set
-                System.setProperty("org.jboss.logging.provider", "slf4j")
-
             }
+        }
+        val zkRunCfgkey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}"
+        if (fromConfig.hasPath(zkRunCfgkey) && fromConfig.getBoolean(zkRunCfgkey)) {
+            System.setProperty(SYS_PROP_ZKRUN, "true")
+        }
 
-    fun hasLoggingDir(): Boolean {
-       return resolvedConfig.hasPath("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLRLOG}")
+        // an extra system property to set
+        System.setProperty(SYS_PROP_JBOSS_LOGGING, "slf4j")
     }
 }
 
