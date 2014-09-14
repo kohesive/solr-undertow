@@ -98,15 +98,16 @@ private class ServerConfigLoader(val configFile: Path) {
         // copy our configuration items into Solr system properties that might be looked for later by Solr
         for (mapping in SOLR_OVERRIDES.entrySet()) {
             val cfgKey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}"
-            if (fromConfig.hasPath(cfgKey)) {
-                val configValue = fromConfig.getString(cfgKey)!!.trim()
-                if (configValue.isNotEmpty()) {
-                    System.setProperty(mapping.key, configValue)
+            val configValue = fromConfig.value(cfgKey)
+            if (configValue.exists()) {
+                if (configValue.isNotEmptyString()) {
+                    System.setProperty(mapping.key, configValue.asString())
                 }
             }
         }
-        val zkRunCfgkey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}"
-        if (fromConfig.hasPath(zkRunCfgkey) && fromConfig.getBoolean(zkRunCfgkey)) {
+        val zkRunCfgkey = fromConfig.value("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}")
+
+        if (zkRunCfgkey.exists() && zkRunCfgkey.asBoolean()) {
             System.setProperty(SYS_PROP_ZKRUN, "true")
         }
 
@@ -232,8 +233,8 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
 private class RequestLimitConfig(private val log: Logger, val name: String, private val cfg: Config) {
     val exactPaths = if (cfg.hasPath("exactPaths")) cfg.getStringList("exactPaths")!! else listOf<String>()
     val pathSuffixes = if (cfg.hasPath("pathSuffixes")) cfg.getStringList("pathSuffixes")!! else listOf<String>()
-    val concurrentRequestLimit = Math.max(cfg.getInt("concurrentRequestLimit"), -1)
-    val maxQueuedRequestLimit = Math.max(cfg.getInt("maxQueuedRequestLimit"), -1)
+    val concurrentRequestLimit = cfg.getInt("concurrentRequestLimit").minimum(-1)
+    val maxQueuedRequestLimit = cfg.getInt("maxQueuedRequestLimit").minimum(-1)
 
 
     fun validate(): Boolean {
