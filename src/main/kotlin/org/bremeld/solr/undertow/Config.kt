@@ -57,7 +57,7 @@ private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_HOSTCONTEXT to OUR_PROP_HOSTCONTEXT,
         SYS_PROP_SOLRHOME to OUR_PROP_SOLRHOME)
 
-private class ServerConfigLoader(val configFile: Path) {
+public class ServerConfigLoader(val configFile: Path) {
     private val solrOverrides = ConfigFactory.parseProperties(getRelevantSystemProperties())!!
     private val userConfig = ConfigFactory.parseFile(configFile.toFile())!!
     private val fullConfig = solrOverrides + userConfig
@@ -70,7 +70,7 @@ private class ServerConfigLoader(val configFile: Path) {
         return resolvedConfig.hasPath("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLRLOG}")
     }
 
-    fun getRelevantSystemProperties(): Properties {
+    private fun getRelevantSystemProperties(): Properties {
         // copy values from typical Solr system or environment properties into our equivalent configuration item
 
         val p = Properties()
@@ -94,7 +94,7 @@ private class ServerConfigLoader(val configFile: Path) {
         return p
     }
 
-    fun setRelevantSystemProperties(fromConfig: Config) {
+    private fun setRelevantSystemProperties(fromConfig: Config) {
         // copy our configuration items into Solr system properties that might be looked for later by Solr
         for (mapping in SOLR_OVERRIDES.entrySet()) {
             val cfgKey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}"
@@ -116,8 +116,8 @@ private class ServerConfigLoader(val configFile: Path) {
     }
 }
 
-private class ServerConfig(private val log: Logger, private val loader: ServerConfigLoader) {
-    val configured = loader.resolvedConfig.getConfig(SOLR_UNDERTOW_CONFIG_PREFIX)!!
+public class ServerConfig(private val log: Logger, val loader: ServerConfigLoader) {
+    private val configured = loader.resolvedConfig.getConfig(SOLR_UNDERTOW_CONFIG_PREFIX)!!
 
     val httpClusterPort = configured.value(OUR_PROP_HTTP_PORT).asInt()
     val httpHost = configured.value("httpHost").asString()
@@ -230,7 +230,7 @@ private class ServerConfig(private val log: Logger, private val loader: ServerCo
 }
 
 
-private class RequestLimitConfig(private val log: Logger, val name: String, private val cfg: Config) {
+public class RequestLimitConfig(private val log: Logger, val name: String, private val cfg: Config) {
     val exactPaths = if (cfg.hasPath("exactPaths")) cfg.getStringList("exactPaths")!! else listOf<String>()
     val pathSuffixes = if (cfg.hasPath("pathSuffixes")) cfg.getStringList("pathSuffixes")!! else listOf<String>()
     val concurrentRequestLimit = cfg.getInt("concurrentRequestLimit").minimum(-1)

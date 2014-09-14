@@ -31,11 +31,11 @@ import java.io.*
 import javax.servlet.*
 import org.slf4j.LoggerFactory
 
-private class Server(cfgLoader: ServerConfigLoader) {
+public class Server(cfgLoader: ServerConfigLoader) {
     val log = LoggerFactory.getLogger("SolrServer")!!
     val cfg by Delegates.lazy { ServerConfig(log, cfgLoader) }
 
-    fun run() {
+    public fun run() {
         log.warn("Solr + Undertow = small server, happy days, fast, and maybe other cool things.")
         log.warn("Starting SolrServer")
         if (!cfg.validate()) {

@@ -39,7 +39,7 @@ private fun String.trimSlashes(): String {
         temp = temp.substring(1)
     }
     if (temp.endsWith('/')) {
-        temp = temp.substring(0,temp.length()-1)
+        temp = temp.substring(0, temp.length() - 1)
     }
     return temp
 }
