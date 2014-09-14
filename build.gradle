@@ -10,7 +10,7 @@ buildscript {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.0'
+    gradleVersion = '2.1'
 }
 
 apply plugin: 'java'
@@ -32,15 +32,23 @@ tasks.withType(Tar){
     compression = Compression.GZIP
 }
 
+task distWithSolr(type: Tar, dependsOn: distTar) {
+    into("${baseName}-${version}-with-solr-4.10.0")
+    with(applicationDistribution)
+    from("example/solr-wars") {
+        into("example/solr-wars")
+    }
+    classifier = 'with-solr-4.10.0'
+}
+
 applicationDistribution.from("example") {
-    into("example")
-    exclude("**/.ignore")
-    exclude("solr-temp/4*")
-    exclude("solr-logs/solr.log")
+        into("example")
+        exclude("**/.ignore")
+        exclude("solr-temp/4*")
+        exclude("solr-logs/solr.log")
+        exclude("solr-wars/*.war")
 }
-applicationDistribution.from("test-data/solr-wars/solr-4.10.0.war") {
-    into("example/solr-wars/")
-}
+
 
 repositories {
     jcenter()
