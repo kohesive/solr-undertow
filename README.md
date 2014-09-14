@@ -110,15 +110,6 @@ export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256
 
 #### HTTP IO and Worker threads
 
-The following settings are defaulted as:
-
-|Setting|Default|
-|---|---|
-|httpIoThreads|number of system cores, as returned by Runtime.getRuntime().availableProcessors()|
-|httpWorkerThreads|8 * number of system cores|
-
-It is rare that you would ever adjust `httpIoThreads`.  The front-end of this server uses non-blocking IO and all IO is done separately from the worker threads.  Therefore be conservative with your thread count.  Start with the defaults, go upwards if not using all CPU, and downwards until CPU hovers below 90% (plus more headroom to allow for index commits and warming new searchers using CPU). 
-
 **see also: [Tuning Solr-Undertow](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
  
 Building Your Own Binary
