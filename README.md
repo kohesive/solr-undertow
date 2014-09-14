@@ -17,7 +17,7 @@ Usage is simple, you only need a configuration file and a Solr WAR:
 bin/solr-undertow <configurationFile>
 ```
 
-You can run the included example stand-alone Solr 4.10.0 using:
+You can run the included example configuration + Solr 4.10.0 (from the release that includes Solr) using:
 
 ```sh
 bin/solr-undertow example/example/conf
