@@ -4,3 +4,4 @@
 *.iml
 /solr-wars/
 /solr0/
+*.DS_Store
