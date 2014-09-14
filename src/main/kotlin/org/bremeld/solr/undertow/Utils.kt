@@ -20,6 +20,8 @@ import java.io.File
 import com.typesafe.config.Config
 import java.nio.file.Paths
 import org.slf4j.Logger
+import com.typesafe.config.ConfigFactory
+import com.typesafe.config.ConfigResolveOptions
 
 private fun printErrorAndExit(msg: String?, errCode: Int = -1) {
   System.err.println(msg ?: "Unknown Error")
@@ -61,6 +63,8 @@ private fun Config.render(): String = this.root()!!.render()!!
 
 private class ConfiguredValue(val cfg: Config, val key: String) {
     fun asPath(): Path = Paths.get(cfg.getString(key)!!.trim())!!.toAbsolutePath()
+    fun asPath(relativeTo: Path): Path = relativeTo.resolveSibling(cfg.getString(key)!!.trim())!!.toAbsolutePath()
+
     fun asString(): String = cfg.getString(key)!!.trim()
     fun asBoolean(): Boolean = cfg.getBoolean(key)
     fun asInt(): Int = cfg.getInt(key)
