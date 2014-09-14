@@ -122,9 +122,9 @@ Building Your Own Binary
 
 You may download a release under the releases here, or you can build your own binary.
 
-`./gradlew build distTar`
+`./gradlew build distTar distWithSolr`
 
-and the resulting binary will be under `./build/distributions` as a .tgz file.  To build a zip, use `distZip` instead of `distTar`
+and the resulting binaries will be under `./build/distributions` as .tgz files.  
 
 #### Building with IntelliJ
 
