@@ -15,7 +15,8 @@
 
 package org.bremeld.solr.undertow
 
-import java.io.File
+import java.nio.file.Paths
+import java.nio.file.Files
 
 public fun main(args: Array<String>) {
     try {
@@ -23,9 +24,9 @@ public fun main(args: Array<String>) {
             System.err.println("A Configuration file must be passed on the command-line (i.e. /my/path/to/solr-undertow.conf)")
             System.exit(-1)
         }
-        val configFile = File(args[0]) verifiedBy { file ->
-            if (!file.exists()) {
-                System.err.println("Configuration file does not exist: ${file.getAbsolutePath()}")
+        val configFile = Paths.get(args[0])!!.toAbsolutePath() verifiedBy { path ->
+            if (!Files.exists(path)) {
+                System.err.println("Configuration file does not exist: ${path.toString()}")
                 System.exit(-1)
             }
         }
