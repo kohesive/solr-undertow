@@ -77,14 +77,14 @@ Other Notes
 
 #### Tuning
 
-**Read about tuning** in the (TUNNING.md file)[https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD]
+**Read about tuning** in the [TUNNING.md file](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
 
 
 #### JDK 1.7
 
 **Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Oracle JDK is also prefered, Open JDK does not perform as well and at times has been incompatible.  
 
-**see also: (Tuning Solr-Undertow)[https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD]
+**see also: [Tuning Solr-Undertow](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
 
 #### Solr WAR Files
 
@@ -119,7 +119,7 @@ The following settings are defaulted as:
 
 It is rare that you would ever adjust `httpIoThreads`.  The front-end of this server uses non-blocking IO and all IO is done separately from the worker threads.  Therefore be conservative with your thread count.  Start with the defaults, go upwards if not using all CPU, and downwards until CPU hovers below 90% (plus more headroom to allow for index commits and warming new searchers using CPU). 
 
-**see also: (Tuning Solr-Undertow)[https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD]
+**see also: [Tuning Solr-Undertow](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
  
 Building Your Own Binary
 ========
