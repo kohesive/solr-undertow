@@ -36,26 +36,36 @@ private val OUR_PROP_ZKRUN = "zkRun"
 private val SYS_PROP_ZKHOST = "zkHost"
 private val OUR_PROP_ZKHOST = "zkHost"
 
-private val SYS_PROP_SOLRLOG = "solr.log"
-private val OUR_PROP_SOLRLOG = "solrLogs"
+private val SYS_PROP_SOLR_LOG = "solr.log"
+private val OUR_PROP_SOLR_LOG = "solrLogs"
 
-private val SYS_PROP_HOSTCONTEXT = "hostContext"
-private val OUR_PROP_HOSTCONTEXT = "solrContextPath"
+private val SYS_PROP_HOST_CONTEXT = "hostContext"
+private val OUR_PROP_HOST_CONTEXT = "solrContextPath"
 
-private val SYS_PROP_SOLRHOME = "solr.solr.home"
-private val OUR_PROP_SOLRHOME = "solrHome"
+private val SYS_PROP_JETTY_HOST = "host"
+private val OUR_PROP_HTTP_HOST = "httpHost"
+
+private val SYS_PROP_SOLR_HOME = "solr.solr.home"
+private val OUR_PROP_SOLR_HOME = "solrHome"
 
 private val SYS_PROP_JBOSS_LOGGING = "org.jboss.logging.provider"
 
 private val OUR_PROP_HTTP_IO_THREADS = "httpIoThreads"
 private val OUR_PROP_HTTP_WORKER_THREADS = "httpWorkerThreads"
+private val OUR_PROP_SOLR_WAR = "solrWarFile"
+private val OUR_PROP_SOLR_VERSION = "solrVersion"
+private val OUR_PROP_TEMP_DIR = "tempDir"
+private val OUR_PROP_LIBEXT_DIR = "libExtDir"
 
-// system and environment variables that need to be treated the same as our configuration items (excluding zkRun)
+// system and environment variables that need to be treated the same as our configuration items
 private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
+        SYS_PROP_ZKRUN to OUR_PROP_ZKRUN,
         SYS_PROP_ZKHOST to OUR_PROP_ZKHOST,
-        SYS_PROP_SOLRLOG to OUR_PROP_SOLRLOG,
-        SYS_PROP_HOSTCONTEXT to OUR_PROP_HOSTCONTEXT,
-        SYS_PROP_SOLRHOME to OUR_PROP_SOLRHOME)
+        SYS_PROP_JETTY_HOST to OUR_PROP_HTTP_HOST,
+        SYS_PROP_SOLR_LOG to OUR_PROP_SOLR_LOG,
+        SYS_PROP_HOST_CONTEXT to OUR_PROP_HOST_CONTEXT,
+        SYS_PROP_SOLR_HOME to OUR_PROP_SOLR_HOME)
+private val SYS_PROPERTIES_THAT_ARE_PATHS = setOf(SYS_PROP_SOLR_LOG, SYS_PROP_SOLR_HOME)
 
 public class ServerConfigLoader(val configFile: Path) {
     private val solrOverrides = ConfigFactory.parseProperties(getRelevantSystemProperties())!!
@@ -67,7 +77,7 @@ public class ServerConfigLoader(val configFile: Path) {
     }
 
     fun hasLoggingDir(): Boolean {
-        return resolvedConfig.hasPath("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLRLOG}")
+        return resolvedConfig.hasPath("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLR_LOG}")
     }
 
     private fun getRelevantSystemProperties(): Properties {
@@ -80,17 +90,13 @@ public class ServerConfigLoader(val configFile: Path) {
             if (System.getProperty(cfgKey) == null) {
                 val value = System.getProperty(mapping.key) ?: System.getenv(mapping.key)
                 if (value != null) {
-                    p.put(cfgKey, value)
+                    val adjustedValue = if (mapping.key == SYS_PROP_ZKRUN) "true"
+                                        else value
+                    p.put(cfgKey, adjustedValue)
                 }
             }
         }
-        if (System.getProperty(SYS_PROP_ZKRUN) ?: System.getenv(SYS_PROP_ZKRUN) != null) {
-            val cfgKey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}"
-            // don't override our own config item set as system property
-            if (System.getProperty(cfgKey) == null) {
-                p.put(cfgKey, "true")
-            }
-        }
+
         return p
     }
 
@@ -101,14 +107,15 @@ public class ServerConfigLoader(val configFile: Path) {
             val configValue = fromConfig.value(cfgKey)
             if (configValue.exists()) {
                 if (configValue.isNotEmptyString()) {
-                    System.setProperty(mapping.key, configValue.asString())
+                    val value = if (SYS_PROPERTIES_THAT_ARE_PATHS.contains(mapping.key)) configValue.asPath(configFile).toString()
+                                else configValue.asString()
+                    System.setProperty(mapping.key, value)
                 }
             }
         }
         val zkRunCfgkey = fromConfig.value("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}")
-
-        if (zkRunCfgkey.exists() && zkRunCfgkey.asBoolean()) {
-            System.setProperty(SYS_PROP_ZKRUN, "true")
+        if (zkRunCfgkey.notExists() || !zkRunCfgkey.asBoolean()) {
+            System.clearProperty(SYS_PROP_ZKRUN)
         }
 
         // an extra system property to set
@@ -120,7 +127,7 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     private val configured = loader.resolvedConfig.getConfig(SOLR_UNDERTOW_CONFIG_PREFIX)!!
 
     val httpClusterPort = configured.value(OUR_PROP_HTTP_PORT).asInt()
-    val httpHost = configured.value("httpHost").asString()
+    val httpHost = configured.value(OUR_PROP_HTTP_HOST).asString()
     val httpIoThreads = configured.value(OUR_PROP_HTTP_IO_THREADS).asInt().minimum(0)
     val httpWorkerThreads = configured.value(OUR_PROP_HTTP_WORKER_THREADS).asInt().minimum(0)
     val activeRequestLimits = configured.value("activeRequestLimits").asStringArray()
@@ -132,17 +139,17 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     }
     val zkRun = configured.value(OUR_PROP_ZKRUN).asBoolean()
     val zkHost = configured.value(OUR_PROP_ZKHOST).asString()
-    val solrHome = configured.value(OUR_PROP_SOLRHOME).asPath()
-    val solrLogs = configured.value(OUR_PROP_SOLRLOG).asPath()
-    val tempDir = configured.value("tempDir").asPath()
-    val solrVersion = configured.value("solrVersion").asString()
-    val solrWarFile = configured.value("solrWarFile").asPath()
-    val libExtDir = configured.value("libExtDir").asPath()
-    val solrContextPath = configured.value(OUR_PROP_HOSTCONTEXT).asString() let { solrContextPath ->
+    val solrHome = configured.value(OUR_PROP_SOLR_HOME).asPath(loader.configFile)
+    val solrLogs = configured.value(OUR_PROP_SOLR_LOG).asPath(loader.configFile)
+    val tempDir = configured.value(OUR_PROP_TEMP_DIR).asPath(loader.configFile)
+    val solrVersion = configured.value(OUR_PROP_SOLR_VERSION).asString()
+    val solrWarFile = configured.value(OUR_PROP_SOLR_WAR).asPath(loader.configFile)
+    val libExtDir = configured.value(OUR_PROP_LIBEXT_DIR).asPath(loader.configFile)
+    val solrContextPath = configured.value(OUR_PROP_HOST_CONTEXT).asString() let { solrContextPath ->
         if (solrContextPath.isEmpty()) "/" else solrContextPath
     }
 
-    fun hasLibExtDir(): Boolean = configured.value("libExtDir").isNotEmptyString()
+    fun hasLibExtDir(): Boolean = configured.value(OUR_PROP_LIBEXT_DIR).isNotEmptyString()
 
 
     private fun printF(p: KMemberProperty<ServerConfig, Path>) = log.info("  ${p.name}: ${p.get(this)}")
@@ -221,6 +228,11 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
         existsIsWriteable(::solrLogs)
         existsIsWriteable(::tempDir)
         existsIsReadable(::solrWarFile)
+
+        val warFileAsString = solrWarFile.toString()
+        if (!warFileAsString.endsWith(".war") && !warFileAsString.endsWith(".zip")) {
+            err("WAR file should have a name ending in .war or maybe .zip, instead is: ${solrWarFile}")
+        }
 
         if (hasLibExtDir()) {
             existsIsReadable(::libExtDir)
