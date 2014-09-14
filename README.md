@@ -106,7 +106,61 @@ export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256
 
 #### Logging
 
-**Logging is via Slf4j routing to _Log4j_** and can be configured differently than the [default](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/log4j.properties) by providing a [custom configuration file](http://logging.apache.org/log4j/2.x/manual/configuration.html) pointed to by the system property log4j.configurationFile. 
+**Logging is via Slf4j routing to _LogBack_** and can be configured differently than the [default](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/logback.xml) by providing a [custom configuration file](http://logback.qos.ch/manual/configuration.html) pointed to by the system property `logback.configurationFile`. 
+
+Solr-Undertow writes the following log files:
+
+|filename|description|
+|---|---|
+|solr*.log|Java logging, including Solr internal logging|
+|error*.log|Java logging, only log messages with level ERROR or above|
+|access*.log|HTTP access logging, see [configuration defaults](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/reference.conf) for more information on format| 
+
+The default access log format is:
+`%t %a %p \"%r\" %q %s %b %Dms %{o,X-Solr-QTime} ${o,X-Solr-Hits}`
+
+In order, these are described as:
+
+|macro|description|
+|---|---|
+|%t|Date and time, in Common Log Format format|
+|%a|Remote IP address|
+|%p|Local port|
+|%U|Requested URL path|
+|%q|Query string, otherwise empty string|
+|%r|First line of the request|
+|%s|HTTP status code of the response|
+|%b|Bytes sent, excluding HTTP headers, or '-' or '-1' if no bytes were sent or unknown
+|%D|Time taken to process the request, in millis|
+|%{o,X-Solr-QTime}|Solr QTime if present in headers, Solr 4.9 and newer see https://issues.apache.org/jira/browse/SOLR-4018|
+|%{o,X-Solr-Hits}|Solr Hits if present in headers, Solr 4.9 and newer see https://issues.apache.org/jira/browse/SOLR-4018|
+
+Other available formats:
+
+|macro|description|
+|---|---|
+|%A|Local IP Address|
+|%B|Bytes sent, excluding HTTP headers|
+|%h|Remote host name|
+|%h|Request protocol (also included in %r)|
+|%l|Remote logical username from identd (always returns '-')|
+|%m|Request method (also included in %r)|
+|%u|Remote user that was authenticated|
+|%v|Local server name|
+|%T|Time taken to process the request, in seconds|
+|%I|current Request thread name (can compare later with stacktraces)|
+|%{i,xxx}|xxx is incoming headers|
+|%{o,xxx}|xxx is outgoing response headers|
+|%{c,xxx}|xxx is a specific cookie|
+|%{r,xxx}|xxx is an attribute in the ServletRequest|
+|%{s,xxx}|xxx is an attribute in the HttpSession|
+
+You can also specify either of these prebuilt formats instead of using macros, although in Solr they may not provide as much useful information as the default format:
+
+|format string|equivalent|
+|---|---|
+|common|`%h %l %u %t "%r" %s %b`|
+|combined|`%h %l %u %t "%r" %s %b "%{i,Referer}" "%{i,User-Agent}"`|
 
 #### HTTP IO and Worker threads
 
