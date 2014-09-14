@@ -32,6 +32,16 @@ tasks.withType(Tar){
     compression = Compression.GZIP
 }
 
+applicationDistribution.from("example") {
+    into("example")
+    exclude("**/.ignore")
+    exclude("solr-temp/4*")
+    exclude("solr-logs/solr.log")
+}
+applicationDistribution.from("test-data/solr-wars/solr-4.10.0.war") {
+    into("example/solr-wars/")
+}
+
 repositories {
     jcenter()
 }

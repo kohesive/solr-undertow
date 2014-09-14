@@ -17,11 +17,19 @@ Usage is simple, you only need a configuration file and a Solr WAR:
 bin/solr-undertow <configurationFile>
 ```
 
+You can run the included example stand-alone Solr 4.10.0 using:
+
+```sh
+bin/solr-undertow example/example/conf
+```
+
+Then navigate your browser to `http://localhost:8983/solr`
+
 #### Configuration
 
 The configuration file is on the JSON like [HOCON format](https://github.com/typesafehub/config/blob/master/HOCON.md) and loaded using [TypeSafe Config](https://github.com/typesafehub/config).  So any features it supports are supported here.
 
-A configuration file must minimally contain these settings:
+A configuration file must minimally contain these settings (paths are relative to the configuration file):
 
 ```json
 solr.undertow: {
@@ -33,7 +41,7 @@ solr.undertow: {
 }
 ```
 
-In this configuration `solrHome` contains at minimum `solr.xml` (and `zoo.cfg` if SolrCloud) and any pre-configured cores.
+In this configuration `solrHome` must contain at minimum `solr.xml` (and `zoo.cfg` if SolrCloud) and any pre-configured cores.
 
 The defaults, and all configuration options can be seen in the [configuration defaults file](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/reference.conf).  Which include `httpClusterPort: 8983`, the default server port.
 
@@ -53,6 +61,7 @@ Settings from the configuration file will be overriden by system properties of t
 |Solr typical|Solr-Undertow Equivalent|
 |---|---|
 |jetty.port|solr.undertow.httpClusterPort|
+|host|solr.undertow.httpHost|
 |zkRun|solr.undertow.zkRun|
 |zkHost|solr.undertow.zkHost|
 |solr.log|solr.undertow.solrLogs|
