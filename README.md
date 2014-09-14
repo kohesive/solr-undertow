@@ -1,7 +1,7 @@
 solr-undertow
 =============
 
-Solr running in standalone server - High Performance, tiny, fast, easy, standalone deployment.  Requires JDK 1.7 or newer.  Less than 4MB download, starts instantly, faster than Jetty, Tomcat and all the others.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as crazy as Scala).
+Solr running in standalone server - High Performance, tiny, fast, easy, standalone deployment.  Requires JDK 1.7 or newer.  Less than 4MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as crazy as Scala).
 
 Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub.
 
