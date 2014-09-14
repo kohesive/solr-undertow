@@ -12,6 +12,7 @@ import kotlin.test.assertEquals
 import org.junit.Before
 import org.junit.Test
 import java.nio.file.Paths
+import java.nio.file.Path
 
 class ConfigTests {
     val log = LoggerFactory.getLogger("ConfigTests")!!
@@ -90,31 +91,36 @@ class ConfigTests {
         assertEquals(testVal, System.getProperty(SYS_PROP_ZKHOST))
     }
 
-    [Test] fun testJettyPortSolrHomeSolrLogAbsent() {
+    [Test] fun testJettyPortHostSolrHomeSolrLogAbsent() {
         // system props jetty.port, solr.solr.home, solr.log if absent should appear after our configuration
         val testPort = 9999
         val testHome = "/my/solr/home"
         val testLogs = "/my/solr/logs"
+        val testHost = "0.0.0.0"
         val cfgHocon = """
                     ${SOLR_UNDERTOW_CONFIG_PREFIX} {
                         ${OUR_PROP_HTTP_PORT}=${testPort}
-                        ${OUR_PROP_SOLRHOME}="${testHome}"
-                        ${OUR_PROP_SOLRLOG}="${testLogs}"
+                        ${OUR_PROP_SOLR_HOME}="${testHome}"
+                        ${OUR_PROP_SOLR_LOG}="${testLogs}"
+                        ${OUR_PROP_HTTP_HOST}="${testHost}"
                     }
                   """
         assertNull(System.getProperty(SYS_PROP_JETTY_PORT))
-        assertNull(System.getProperty(SYS_PROP_SOLRHOME))
-        assertNull(System.getProperty(SYS_PROP_SOLRLOG))
+        assertNull(System.getProperty(SYS_PROP_JETTY_HOST))
+        assertNull(System.getProperty(SYS_PROP_SOLR_HOME))
+        assertNull(System.getProperty(SYS_PROP_SOLR_LOG))
 
         val cfg = makeConfig(cfgHocon)
 
         assertEquals(testPort, cfg.httpClusterPort)
+        assertEquals(testHost, cfg.httpHost)
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
         assertEquals(testPort.toString(), System.getProperty(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, System.getProperty(SYS_PROP_SOLRHOME))
-        assertEquals(testLogs, System.getProperty(SYS_PROP_SOLRLOG))
+        assertEquals(testHost, System.getProperty(SYS_PROP_JETTY_HOST))
+        assertEquals(testHome, System.getProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, System.getProperty(SYS_PROP_SOLR_LOG))
     }
 
     [Test] fun testJettyPortSolrHomeSolrLogPresent() {
@@ -124,18 +130,20 @@ class ConfigTests {
         val testLogs = "/already/my/solr/logs"
 
         System.setProperty(SYS_PROP_JETTY_PORT, testPort.toString())
-        System.setProperty(SYS_PROP_SOLRHOME, testHome)
-        System.setProperty(SYS_PROP_SOLRLOG, testLogs)
+        System.setProperty(SYS_PROP_SOLR_HOME, testHome)
+        System.setProperty(SYS_PROP_SOLR_LOG, testLogs)
 
         val cfg = makeEmptyConfig()
+
+        assertFalse(cfg.hasLibExtDir())
 
         assertEquals(testPort, cfg.httpClusterPort)
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
         assertEquals(testPort.toString(), System.getProperty(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, System.getProperty(SYS_PROP_SOLRHOME))
-        assertEquals(testLogs, System.getProperty(SYS_PROP_SOLRLOG))
+        assertEquals(testHome, System.getProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, System.getProperty(SYS_PROP_SOLR_LOG))
     }
 
     [Test] fun testThreadMinimum() {
@@ -174,7 +182,36 @@ class ConfigTests {
             assertEquals(1, cfg.httpIoThreads)
             assertEquals(3, cfg.httpWorkerThreads)
         }
+    }
 
+    [Test] fun testPathsAreRelativeToConfig() {
+        val testHome = "./home"
+        val testLogs = "./log"
+        val testWar = "./war/something.war"
+        val testTemp = "./temp"
+        val testLibExt = "./libext"
+        val cfgHocon = """
+                    ${SOLR_UNDERTOW_CONFIG_PREFIX} {
+                        ${OUR_PROP_SOLR_HOME}="${testHome}"
+                        ${OUR_PROP_SOLR_LOG}="${testLogs}"
+                        ${OUR_PROP_SOLR_WAR}="${testWar}"
+                        ${OUR_PROP_TEMP_DIR}="${testTemp}"
+                        ${OUR_PROP_LIBEXT_DIR}="${testLibExt}"
+                    }
+                  """
 
+        val cfg = makeConfig(cfgHocon)
+        val cfgFile = cfg.loader.configFile
+        fun String.toCfgDir(): Path = cfgFile.resolveSibling(this)!!.toAbsolutePath()
+
+        assertEquals(testHome.toCfgDir(), cfg.solrHome)
+        assertEquals(testLogs.toCfgDir(), cfg.solrLogs)
+        assertEquals(testWar.toCfgDir(), cfg.solrWarFile)
+        assertEquals(testTemp.toCfgDir(), cfg.tempDir)
+        assertEquals(testLibExt.toCfgDir(), cfg.libExtDir)
+        assertTrue(cfg.hasLibExtDir())
+
+        assertEquals(testHome.toCfgDir().toString(), System.getProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs.toCfgDir().toString(), System.getProperty(SYS_PROP_SOLR_LOG))
     }
 }
