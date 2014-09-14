@@ -7,7 +7,7 @@ Releases [are available here](https://github.com/bremeld/solr-undertow/releases)
 
 This application launches a Solr WAR file as a standalone server running a high performance HTTP front-end based on [undertow.io](http://undertow.io) (the engine behind WildFly, the new JBoss).  It has no features of an application server, does nothing more than load Solr servlets and also service the Admin UI.  It is production-quality for a stand-alone Solr server.
 
-**NOTE:** Be sure to read the section below entitled "HTTP IO and Worker threads" since the defaults are conservative.
+**NOTE:** Be sure to read the [Tuning Solr-Undertow](./TUNING.MD) guide.
 
 #### Usage
 
@@ -43,16 +43,16 @@ solr.undertow: {
 
 In this configuration `solrHome` must contain at minimum `solr.xml` (and `zoo.cfg` if SolrCloud) and any pre-configured cores.
 
-The defaults, and all configuration options can be seen in the [configuration defaults file](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/reference.conf).  Which include `httpClusterPort: 8983`, the default server port.
+The defaults, and all configuration options can be seen in the [configuration defaults file](src/main/resources/reference.conf).  Which include `httpClusterPort: 8983`, the default server port.
 
 Configured directories are validated at startup to give clear error messages, they are checked for existance and readable/writeable attributes (depending on the directory).
 
 #### Example Configuration / Directory Tree
 
-Two example configurations are provided in the [example directory](https://github.com/bremeld/solr-undertow/tree/master/example):
+Two example configurations are provided in the [example directory](example/):
 
-* [Basic configuration](https://github.com/bremeld/solr-undertow/blob/master/example/example.conf)
-* [Configuration with request limitting](https://github.com/bremeld/solr-undertow/blob/master/example/example-ratelimited.conf) (max concurrent requests + max queued requests)
+* [Basic configuration](example/example.conf)
+* [Configuration with request limitting](example/example-ratelimited.conf) (max concurrent requests + max queued requests)
 
 #### System Properties
 
@@ -77,14 +77,14 @@ Other Notes
 
 #### Tuning
 
-**Read about tuning** in the [TUNNING.md file](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
+**Read about tuning** in the [TUNNING.md file](./TUNING.MD)
 
 
 #### JDK 1.7
 
 **Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Oracle JDK is also prefered, Open JDK does not perform as well and at times has been incompatible.  
 
-**see also:** [Tuning Solr-Undertow](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
+**see also:** [Tuning Solr-Undertow](./TUNING.MD)
 
 #### Solr WAR Files
 
@@ -106,7 +106,7 @@ export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256
 
 #### Logging
 
-**Logging is via Slf4j routing to _LogBack_** and can be configured differently than the [default](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/logback.xml) by providing a [custom configuration file](http://logback.qos.ch/manual/configuration.html) pointed to by the system property `logback.configurationFile`. 
+**Logging is via Slf4j routing to _LogBack_** and can be configured differently than the [default](src/main/resources/logback.xml) by providing a [custom configuration file](http://logback.qos.ch/manual/configuration.html) pointed to by the system property `logback.configurationFile`. 
 
 Solr-Undertow writes the following log files:
 
@@ -114,7 +114,7 @@ Solr-Undertow writes the following log files:
 |---|---|
 |solr*.log|Java logging, including Solr internal logging|
 |error*.log|Java logging, only log messages with level ERROR or above|
-|access*.log|HTTP access logging, see [configuration defaults](https://github.com/bremeld/solr-undertow/blob/master/src/main/resources/reference.conf) for more information on format| 
+|access*.log|HTTP access logging, see [configuration defaults](src/main/resources/reference.conf) for more information on format| 
 
 The default access log format is:
 `%t %a %p \"%r\" %q %s %b %Dms %{o,X-Solr-QTime} ${o,X-Solr-Hits}`
@@ -164,7 +164,7 @@ You can also specify either of these prebuilt formats instead of using macros, a
 
 #### HTTP IO and Worker threads
 
-**see also:** [Tuning Solr-Undertow](https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD)
+**see also:** [Tuning Solr-Undertow](./TUNING.MD)
  
 Building Your Own Binary
 ========
@@ -177,7 +177,7 @@ and the resulting binaries will be under `./build/distributions` as .tgz files.
 
 #### Building with IntelliJ
 
-Load the build.gradle as a project, accept the default Gradle wrapper, and then fixup JDK to be 1.7 or newer.  Be sure you have Kotlin plugin installed, check the [gradle.properties file](https://github.com/bremeld/solr-undertow/blob/master/gradle.properties) for Kotlin version number.
+Load the build.gradle as a project, accept the default Gradle wrapper, and then fixup JDK to be 1.7 or newer.  Be sure you have Kotlin plugin installed, check the [gradle.properties file](./gradle.properties) for Kotlin version number.
 
 
 
