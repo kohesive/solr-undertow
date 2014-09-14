@@ -150,6 +150,7 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     private fun printSA(p: KMemberProperty<ServerConfig, Array<String>>) = log.info("  ${p.name}: ${p.get(this).joinToString(",")}")
     private fun printB(p: KMemberProperty<ServerConfig, Boolean>) = log.info("  ${p.name}: ${p.get(this)}")
     private fun printI(p: KMemberProperty<ServerConfig, Int>) = log.info("  ${p.name}: ${p.get(this)}")
+    private fun printI(p: KMemberProperty<ServerConfig, Int>, defaultVal: Int) = log.info("  ${p.name}: ${p.get(this)} ${if (p.get(this) == defaultVal) "(no setting, using default)" else ""}")
 
     fun print() {
         log.info("=== [ Config File settings from: ${loader.configFile} ] ===")
@@ -157,8 +158,8 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
         printS(::zkHost)
         printI(::httpClusterPort)
         printS(::httpHost)
-        printI(::httpIoThreads)
-        printI(::httpWorkerThreads)
+        printI(::httpIoThreads, 0)
+        printI(::httpWorkerThreads, 0)
 
         printSA(::activeRequestLimits)
 
