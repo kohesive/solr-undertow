@@ -20,7 +20,7 @@ bin/solr-undertow <configurationFile>
 You can run the included example configuration + Solr 4.10.0 (from the release that includes Solr) using:
 
 ```sh
-bin/solr-undertow example/example/conf
+bin/solr-undertow example/example.conf
 ```
 
 Then navigate your browser to `http://localhost:8983/solr`
