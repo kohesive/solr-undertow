@@ -74,9 +74,17 @@ The solr-undertow has priority if both are present in system properties; you onl
 Other Notes
 ===========
 
+
+#### Tuning
+
+**Read about tuning** in the (TUNNING.md file)[https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD]
+
+
 #### JDK 1.7
 
-**Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Oracle JDK is also prefered, Open JDK does not do as well with memory management, and has at different releases had different incompatibilities.  Start with clearing settings for garbage collection, and tune from there if needed.
+**Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Oracle JDK is also prefered, Open JDK does not perform as well and at times has been incompatible.  
+
+**see also: (Tuning Solr-Undertow)[https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD]
 
 #### Solr WAR Files
 
@@ -109,9 +117,10 @@ The following settings are defaulted as:
 |httpIoThreads|number of system cores, as returned by Runtime.getRuntime().availableProcessors()|
 |httpWorkerThreads|8 * number of system cores|
 
-It is rare that you would ever adjust `httpIoThreads` (and 2 * cores would be about the max value ever needed at any scale level).  The front-end of this server uses non-blocking IO and all IO is done separately from the worker threads.  Therefore be conservative with your thread count.  A setting of 10,000 as you will see in the example Solr Jetty config, is likely excessive, start with the defaults and work upwards in small increments. 
+It is rare that you would ever adjust `httpIoThreads`.  The front-end of this server uses non-blocking IO and all IO is done separately from the worker threads.  Therefore be conservative with your thread count.  Start with the defaults, go upwards if not using all CPU, and downwards until CPU hovers below 90% (plus more headroom to allow for index commits and warming new searchers using CPU). 
 
-
+**see also: (Tuning Solr-Undertow)[https://github.com/bremeld/solr-undertow/blob/master/TUNING.MD]
+ 
 Building Your Own Binary
 ========
 
