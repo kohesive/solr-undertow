@@ -33,17 +33,6 @@ private fun deleteRecursive(f: File): Unit {
     f.delete()
 }
 
-private fun String.trimSlashes(): String {
-    var temp = this.trim()
-    if (temp.startsWith('/')) {
-        temp = temp.substring(1)
-    }
-    if (temp.endsWith('/')) {
-        temp = temp.substring(0, temp.length() - 1)
-    }
-    return temp
-}
-
 private fun <T> T.verifiedBy(verifyWith: (T) -> Unit): T {
     verifyWith(this)
     return this
@@ -60,7 +49,6 @@ private fun <T> T.then(initWith: (T) -> Unit): T {
 }
 
 private fun Config.plus(fallback: Config): Config = this.withFallback(fallback)!!
-
 private fun Config.value(key: String): ConfiguredValue = ConfiguredValue(this, key)
 private fun Config.nested(key: String): Config = this.getConfig(key)!!
 
