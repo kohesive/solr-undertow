@@ -25,8 +25,7 @@ public fun main(args: Array<String>) {
         }
         val configFile = Paths.get(args[0])!!.toAbsolutePath() verifiedBy { path ->
             if (!Files.exists(path)) {
-                System.err.println("Configuration file does not exist: ${path.toString()}")
-                System.exit(-1)
+                printErrorAndExit("Configuration file does not exist: ${path.toString()}")
             }
         }
 
