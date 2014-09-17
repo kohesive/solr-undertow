@@ -61,7 +61,6 @@ Settings from the configuration file will be overriden by system properties of t
 |Solr typical|Solr-Undertow Equivalent|
 |---|---|
 |jetty.port|solr.undertow.httpClusterPort|
-|host|solr.undertow.httpHost|
 |zkRun|solr.undertow.zkRun|
 |zkHost|solr.undertow.zkHost|
 |solr.log|solr.undertow.solrLogs|
