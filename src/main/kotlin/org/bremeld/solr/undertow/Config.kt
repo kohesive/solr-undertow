@@ -43,7 +43,6 @@ private val OUR_PROP_SOLR_LOG = "solrLogs"
 private val SYS_PROP_HOST_CONTEXT = "hostContext"
 private val OUR_PROP_HOST_CONTEXT = "solrContextPath"
 
-private val SYS_PROP_JETTY_HOST = "host"
 private val OUR_PROP_HTTP_HOST = "httpHost"
 
 private val SYS_PROP_SOLR_HOME = "solr.solr.home"
@@ -63,7 +62,6 @@ private val OUR_PROP_LIBEXT_DIR = "libExtDir"
 private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_ZKRUN to OUR_PROP_ZKRUN,
         SYS_PROP_ZKHOST to OUR_PROP_ZKHOST,
-        SYS_PROP_JETTY_HOST to OUR_PROP_HTTP_HOST,
         SYS_PROP_SOLR_LOG to OUR_PROP_SOLR_LOG,
         SYS_PROP_HOST_CONTEXT to OUR_PROP_HOST_CONTEXT,
         SYS_PROP_SOLR_HOME to OUR_PROP_SOLR_HOME)

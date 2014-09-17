@@ -106,7 +106,6 @@ class ConfigTests {
                     }
                   """
         assertNull(System.getProperty(SYS_PROP_JETTY_PORT))
-        assertNull(System.getProperty(SYS_PROP_JETTY_HOST))
         assertNull(System.getProperty(SYS_PROP_SOLR_HOME))
         assertNull(System.getProperty(SYS_PROP_SOLR_LOG))
 
@@ -118,7 +117,6 @@ class ConfigTests {
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
         assertEquals(testPort.toString(), System.getProperty(SYS_PROP_JETTY_PORT))
-        assertEquals(testHost, System.getProperty(SYS_PROP_JETTY_HOST))
         assertEquals(testHome, System.getProperty(SYS_PROP_SOLR_HOME))
         assertEquals(testLogs, System.getProperty(SYS_PROP_SOLR_LOG))
     }
