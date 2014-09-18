@@ -77,6 +77,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
 
             log.info("Loading one Solr admin page to confirm not in a wait state...")
             // trigger a Solr servlet in case Solr is waiting to start still
+            // TODO: change this to a HTTP request with status check (200), terminate server on 500?  (allow for long timeout, we could be waiting on node joins and startup delays)
             URL("${listeningUrl}/#/").readBytes()
             log.warn("!!!! SERVER READY:  Listening, and ready at ${listeningUrl} !!!!")
 
