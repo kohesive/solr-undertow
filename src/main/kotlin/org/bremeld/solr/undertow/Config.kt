@@ -146,7 +146,7 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     val solrWarFile = configured.value(OUR_PROP_SOLR_WAR).asPath(loader.configFile)
     val libExtDir = configured.value(OUR_PROP_LIBEXT_DIR).asPath(loader.configFile)
     val solrContextPath = configured.value(OUR_PROP_HOST_CONTEXT).asString() let { solrContextPath ->
-        if (solrContextPath.isEmpty()) "/" else solrContextPath
+        if (!solrContextPath.startsWith("/")) "/" + solrContextPath else solrContextPath
     }
 
     val accessLogFormat = configured.value("accessLogFormat").asString()
