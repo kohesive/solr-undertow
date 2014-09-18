@@ -70,13 +70,15 @@ public class Server(cfgLoader: ServerConfigLoader) {
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, cfg.accessLogEnableRequestTiming)!!
                     .build()!!
 
+            log.warn("Starting Undertow HTTP server...")
             server.start()
-            log.info("Undertow started")
+            val listeningUrl = "http://${cfg.httpHost}:${cfg.httpClusterPort}${cfg.solrContextPath}"
+            log.warn("Undertow HTTP Server started, listening on ${listeningUrl}")
 
-            log.info("Initializing Solr")
-            // trigger a Solr servlet so that Solr is loaded, connects to cluster, et al
-            URL("http://${cfg.httpHost}:${cfg.httpClusterPort}/solr/#/").readBytes()
-            log.info("!!!! SERVER READY:  Solr has started and finished startup/cluster processing !!!!")
+            log.info("Loading one Solr admin page to confirm not in a wait state...")
+            // trigger a Solr servlet in case Solr is waiting to start still
+            URL("${listeningUrl}/#/").readBytes()
+            log.warn("!!!! SERVER READY:  Listening, and ready at ${listeningUrl} !!!!")
 
             return ServerStartupStatus(true, "OK")
         } catch (ex: Throwable) {
@@ -88,7 +90,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
     private data class DeployedWarInfo(val successfulDeploy: Boolean, val cacheDir: Path, val htmlDir: Path, val libDir: Path, val classLoader: ClassLoader)
 
     private fun deployWarFileToCache(solrWar: Path): DeployedWarInfo {
-        log.info("Extracting WAR file: ${solrWar}")
+        log.warn("Extracting WAR file: ${solrWar}")
 
         val tempDirThisSolr = cfg.tempDir.resolve(cfg.solrVersion)!!
         val tempDirHtml = tempDirThisSolr.resolve("html-root")!!
@@ -190,16 +192,19 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 .setClassLoader(solrWarDeployment.classLoader)!!
                 .setContextPath(cfg.solrContextPath)!!
                 .setDefaultServletConfig(DefaultServletConfig())!!
+                .setDefaultEncoding("UTF-8")!!
                 .setDeploymentName("solr.war")!!
+                .setEagerFilterInit(true)!!
                 .addFilters(
                         Servlets.filter("SolrRequestFilter", solrDispatchFilterClass)!!
+                        .addInitParam("path-prefix", null) // do we need to set thisif context path is more than one level deep?
                 )!!
                 .addFilterUrlMapping("SolrRequestFilter", "/*", DispatcherType.REQUEST)!!
                 .addServlets(
                         Servlets.servlet("Zookeeper", solrZookeeprServletClass)!!
-                                .addMapping("/zookeeper"),
+                                .addMapping("/zookeeper")!!,
                         Servlets.servlet("LoadAdminUI", solrAdminUiServletClass)!!
-                                .addMapping("/admin.html"),
+                                .addMapping("/admin.html")!!,
                         Servlets.servlet("SolrRestApi", solrRestApiServletClass)!!
                                 .addInitParam("org.restlet.application", "org.apache.solr.rest.SolrRestApi")!!
                                 .addMapping("/schema/*")!!
@@ -208,9 +213,11 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 .addWelcomePage("admin.html")!!
                 .setResourceManager(FileResourceManager(solrWarDeployment.htmlDir.toFile(), 1024))!!
 
+        log.warn("Initializing Solr, deploying the Servlet Container...")
         val deploymentManager = Servlets.defaultContainer()!!.addDeployment(deployment)!!
         deploymentManager.deploy()
         val deploymentHandler = deploymentManager.start()!!
+        log.warn("Solr Servlet Container deployed.")
 
         // create nested request handlers that route to rate limiting handlers put suffix on inside,
         // and exact matches on outside so they are checked first.
