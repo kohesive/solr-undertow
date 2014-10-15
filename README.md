@@ -36,7 +36,7 @@ solr.undertow: {
   solrHome: "./solr-home"
   solrLogs: "./solr-logs"
   tempDir: "./solr-temp"
-  solrVersion: "4.4.0"
+  solrVersion: "4.10.1"
   solrWarFile: ./solr-wars/solr-${solr.undertow.solrVersion}.war
 }
 ```
