@@ -23,7 +23,7 @@ public fun main(args: Array<String>) {
         if (args.size != 1) {
             printErrorAndExit("A Configuration file must be passed on the command-line (i.e. /my/path/to/solr-undertow.conf)")
         }
-        val configFile = Paths.get(args[0])!!.toAbsolutePath() verifiedBy { path ->
+        val configFile = Paths.get(args[0]).toAbsolutePath() verifiedBy { path ->
             if (!Files.exists(path)) {
                 printErrorAndExit("Configuration file does not exist: ${path.toString()}")
             }
