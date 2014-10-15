@@ -26,46 +26,46 @@ import com.typesafe.config.ConfigResolveOptions
 import java.nio.file.Path
 import org.slf4j.LoggerFactory
 
-private val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
+internal val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
 
-private val SYS_PROP_JETTY_PORT = "jetty.port"
-private val OUR_PROP_HTTP_PORT = "httpClusterPort"
+internal val SYS_PROP_JETTY_PORT = "jetty.port"
+internal val OUR_PROP_HTTP_PORT = "httpClusterPort"
 
-private val SYS_PROP_ZKRUN = "zkRun"
-private val OUR_PROP_ZKRUN = "zkRun"
+internal val SYS_PROP_ZKRUN = "zkRun"
+internal val OUR_PROP_ZKRUN = "zkRun"
 
-private val SYS_PROP_ZKHOST = "zkHost"
-private val OUR_PROP_ZKHOST = "zkHost"
+internal val SYS_PROP_ZKHOST = "zkHost"
+internal val OUR_PROP_ZKHOST = "zkHost"
 
-private val SYS_PROP_SOLR_LOG = "solr.log"
-private val OUR_PROP_SOLR_LOG = "solrLogs"
+internal val SYS_PROP_SOLR_LOG = "solr.log"
+internal val OUR_PROP_SOLR_LOG = "solrLogs"
 
-private val SYS_PROP_HOST_CONTEXT = "hostContext"
-private val OUR_PROP_HOST_CONTEXT = "solrContextPath"
+internal val SYS_PROP_HOST_CONTEXT = "hostContext"
+internal val OUR_PROP_HOST_CONTEXT = "solrContextPath"
 
-private val OUR_PROP_HTTP_HOST = "httpHost"
+internal val OUR_PROP_HTTP_HOST = "httpHost"
 
-private val SYS_PROP_SOLR_HOME = "solr.solr.home"
-private val OUR_PROP_SOLR_HOME = "solrHome"
+internal val SYS_PROP_SOLR_HOME = "solr.solr.home"
+internal val OUR_PROP_SOLR_HOME = "solrHome"
 
-private val SYS_PROP_JBOSS_LOGGING = "org.jboss.logging.provider"
+internal val SYS_PROP_JBOSS_LOGGING = "org.jboss.logging.provider"
 
-private val OUR_PROP_HTTP_IO_THREADS = "httpIoThreads"
-private val OUR_PROP_HTTP_WORKER_THREADS = "httpWorkerThreads"
-private val OUR_PROP_SOLR_WAR = "solrWarFile"
-private val OUR_PROP_SOLR_VERSION = "solrVersion"
-private val OUR_PROP_TEMP_DIR = "tempDir"
-private val OUR_PROP_LIBEXT_DIR = "libExtDir"
+internal val OUR_PROP_HTTP_IO_THREADS = "httpIoThreads"
+internal val OUR_PROP_HTTP_WORKER_THREADS = "httpWorkerThreads"
+internal val OUR_PROP_SOLR_WAR = "solrWarFile"
+internal val OUR_PROP_SOLR_VERSION = "solrVersion"
+internal val OUR_PROP_TEMP_DIR = "tempDir"
+internal val OUR_PROP_LIBEXT_DIR = "libExtDir"
 
 
 // system and environment variables that need to be treated the same as our configuration items
-private val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
+internal val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_ZKRUN to OUR_PROP_ZKRUN,
         SYS_PROP_ZKHOST to OUR_PROP_ZKHOST,
         SYS_PROP_SOLR_LOG to OUR_PROP_SOLR_LOG,
         SYS_PROP_HOST_CONTEXT to OUR_PROP_HOST_CONTEXT,
         SYS_PROP_SOLR_HOME to OUR_PROP_SOLR_HOME)
-private val SYS_PROPERTIES_THAT_ARE_PATHS = setOf(SYS_PROP_SOLR_LOG, SYS_PROP_SOLR_HOME)
+internal val SYS_PROPERTIES_THAT_ARE_PATHS = setOf(SYS_PROP_SOLR_LOG, SYS_PROP_SOLR_HOME)
 
 public class ServerConfigLoader(val configFile: Path) {
     private val solrOverrides = ConfigFactory.parseProperties(getRelevantSystemProperties())!!

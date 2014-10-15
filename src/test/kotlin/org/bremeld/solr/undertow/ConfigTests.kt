@@ -15,7 +15,7 @@ import java.nio.file.Paths
 import java.nio.file.Path
 
 class ConfigTests {
-    val log = LoggerFactory.getLogger("ConfigTests")!!
+    val log = LoggerFactory.getLogger("ConfigTests")
 
     fun makeEmptyConfig(): ServerConfig {
        return makeConfig("${SOLR_UNDERTOW_CONFIG_PREFIX} { }")
@@ -27,7 +27,7 @@ class ConfigTests {
 
     fun loadConfigFile(hocon: String): ServerConfigLoader {
         val tempConfig = Files.createTempFile("UnitTest-ConfigTests", ".conf")
-        Files.write(tempConfig, hocon.toByteArray(defaultCharset))
+        Files.write(tempConfig, hocon.toByteArray())
         return ServerConfigLoader(tempConfig)
     }
 
@@ -200,7 +200,7 @@ class ConfigTests {
 
         val cfg = makeConfig(cfgHocon)
         val cfgFile = cfg.loader.configFile
-        fun String.toCfgDir(): Path = cfgFile.resolveSibling(this)!!.toAbsolutePath()
+        fun String.toCfgDir(): Path = cfgFile.resolveSibling(this).toAbsolutePath()
 
         assertEquals(testHome.toCfgDir(), cfg.solrHome)
         assertEquals(testLogs.toCfgDir(), cfg.solrLogs)
