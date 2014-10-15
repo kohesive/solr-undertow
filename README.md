@@ -17,7 +17,7 @@ Usage is simple, you only need a configuration file and a Solr WAR:
 bin/solr-undertow <configurationFile>
 ```
 
-You can run the included example configuration + Solr 4.10.0 (from the release that includes Solr) using:
+You can run the included example configuration + Solr 4.10.1 (from the release that includes Solr) using:
 
 ```sh
 bin/solr-undertow example/example.conf
@@ -85,7 +85,7 @@ Other Notes
 
 #### Solr WAR Files
 
-**You can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.0 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.0/solr-4.10.0.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
+**You can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.1 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.1/solr-4.10.1.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
 
 #### Custom JVM Parameters
 
