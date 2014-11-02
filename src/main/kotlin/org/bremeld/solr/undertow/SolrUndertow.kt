@@ -32,7 +32,6 @@ import javax.servlet.*
 import org.slf4j.LoggerFactory
 import io.undertow.server.handlers.accesslog.AccessLogHandler
 import io.undertow.server.handlers.accesslog.AccessLogReceiver
-import org.xnio.Options
 
 public data class ServerStartupStatus(val started: Boolean, val errorMessage: String)
 
@@ -58,8 +57,10 @@ public class Server(cfgLoader: ServerConfigLoader) {
             val workerThreads = if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads
 
             val handler = AccessLogHandler(buildSolrServletHandler(solrWarDeployment), object : AccessLogReceiver {
-                    override fun logMessage(message: String?) { cfg.accessLogger.info(message) }
-                   }, cfg.accessLogFormat, javaClass<Server>().getClassLoader())
+                override fun logMessage(message: String?) {
+                    cfg.accessLogger.info(message)
+                }
+            }, cfg.accessLogFormat, javaClass<Server>().getClassLoader())
 
             val server = Undertow.builder()
                     .addHttpListener(cfg.httpClusterPort, cfg.httpHost)
@@ -152,6 +153,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                     return FileVisitResult.CONTINUE
                 }
             }
+
             override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
                 // fix modification time of dir
                 if (exc == null) {
@@ -161,11 +163,13 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 }
                 return FileVisitResult.CONTINUE
             }
+
             override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
                 val destination = tempDirHtml.resolve(warRootPath.relativize(file).toString())
                 Files.copy(file, destination, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
                 return FileVisitResult.CONTINUE
             }
+
             override fun visitFileFailed(file: Path, ex: IOException?): FileVisitResult {
                 log.error("Unable to copy from WAR to temp directory, file ${file.toAbsolutePath().toString()}, due to '${ex?.getMessage() ?: ex?.javaClass?.getName() ?: "unknown"}'", ex)
                 warCopyFailed = true
@@ -198,7 +202,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 .setEagerFilterInit(true)
                 .addFilters(
                         Servlets.filter("SolrRequestFilter", solrDispatchFilterClass)
-                        .addInitParam("path-prefix", null) // do we need to set thisif context path is more than one level deep?
+                                .addInitParam("path-prefix", null) // do we need to set thisif context path is more than one level deep?
                 )
                 .addFilterUrlMapping("SolrRequestFilter", "/*", DispatcherType.REQUEST)
                 .addServlets(
