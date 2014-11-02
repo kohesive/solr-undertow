@@ -33,12 +33,12 @@ tasks.withType(Tar){
 }
 
 task distWithSolr(type: Tar, dependsOn: distTar) {
-    into("${baseName}-${version}-with-solr-4.10.1")
+    into("${baseName}-${version}-with-solr-${version_solr}")
     with(applicationDistribution)
     from("example/solr-wars") {
         into("example/solr-wars")
     }
-    classifier = 'with-solr-4.10.1'
+    classifier = "with-solr-${version_solr}"
 }
 
 applicationDistribution.from("example") {

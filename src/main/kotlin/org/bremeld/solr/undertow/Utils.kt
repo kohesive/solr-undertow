@@ -20,12 +20,10 @@ import java.io.File
 import com.typesafe.config.Config
 import java.nio.file.Paths
 import org.slf4j.Logger
-import com.typesafe.config.ConfigFactory
-import com.typesafe.config.ConfigResolveOptions
 
 private fun printErrorAndExit(msg: String?, errCode: Int = -1) {
-  System.err.println(msg ?: "Unknown Error")
-  System.exit(errCode)
+    System.err.println(msg ?: "Unknown Error")
+    System.exit(errCode)
 }
 
 private fun deleteRecursive(p: Path): Unit {
@@ -87,5 +85,5 @@ private fun Int.maximum(maxVal: Int): Int = Math.min(this, maxVal)
 private fun Int.coerce(minVal: Int, maxVal: Int) = this.minimum(minVal).maximum(maxVal)
 private fun Int.coerce(range: IntRange) = this.minimum(range.start).maximum(range.end)
 
-private inline fun Logger.debug(foo: ()->String): Unit = if (this.isDebugEnabled()) this.debug(foo())
+private inline fun Logger.debug(foo: () -> String): Unit = if (this.isDebugEnabled()) this.debug(foo())
 
