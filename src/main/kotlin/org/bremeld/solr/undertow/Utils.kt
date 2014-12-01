@@ -20,20 +20,23 @@ import java.io.File
 import com.typesafe.config.Config
 import java.nio.file.Paths
 import org.slf4j.Logger
+import java.nio.file.Files
 
 private fun printErrorAndExit(msg: String?, errCode: Int = -1) {
     System.err.println(msg ?: "Unknown Error")
     System.exit(errCode)
 }
 
-private fun deleteRecursive(p: Path): Unit {
-    deleteRecursive(p.toFile())
-}
+public fun Path.exists(): Boolean = Files.exists(this)
+public fun Path.notExists(): Boolean = !this.exists()
 
-private fun deleteRecursive(f: File): Unit {
+public fun Path.deleteRecursive(): Unit = delDirRecurse(this.toFile())
+public fun File.deleteRecursive(): Unit = delDirRecurse(this)
+
+private fun delDirRecurse(f: File): Unit {
     if (f.isDirectory()) {
         for (c in f.listFiles()) {
-            deleteRecursive(c)
+            delDirRecurse(c)
         }
     }
     f.delete()
