@@ -53,7 +53,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 return ServerStartupStatus(false, "WAR file failed to deploy, terminating server")
             }
 
-            val ioThreads = Math.max(1, if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads)
+            val ioThreads = (if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads).minimum(1)
             val workerThreads = if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads
 
             val handler = AccessLogHandler(buildSolrServletHandler(solrWarDeployment), object : AccessLogReceiver {
@@ -98,14 +98,14 @@ public class Server(cfgLoader: ServerConfigLoader) {
         val tempDirHtml = tempDirThisSolr.resolve("html-root")
         val tempDirJars = tempDirThisSolr.resolve("lib")
 
-        deleteRecursive(tempDirThisSolr)
+        tempDirThisSolr.deleteRecursive()
         Files.createDirectories(tempDirThisSolr)
         Files.createDirectories(tempDirHtml)
         Files.createDirectories(tempDirJars)
 
         val FAILED_DEPLOYMENT = DeployedWarInfo(false, tempDirThisSolr, tempDirHtml, tempDirJars, ClassLoader.getSystemClassLoader())
 
-        val warUri = URI.create("jar:file:${solrWar}")
+        val warUri = URI.create("jar:file:${solrWar.toString().replace(File.separatorChar,'/').replace('\\','/')}")
         val warJarFs = try {
             FileSystems.newFileSystem(warUri, mapOf("create" to "false"))
         } catch (ex: Throwable) {
@@ -115,7 +115,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
         val warLibPath = warJarFs.getPath("/WEB-INF/lib/")
         val warRootPath = warJarFs.getPath("/")
 
-        if (!Files.exists(warLibPath) || !Files.isDirectory(warLibPath)) {
+        if (warLibPath.notExists() || !Files.isDirectory(warLibPath)) {
             log.error("The WAR file ${solrWar} does not contain WEB-INF/lib/ directory for the classpath jars")
             return FAILED_DEPLOYMENT
         }
@@ -136,7 +136,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
         var warCopyFailed = false
 
         Files.walkFileTree(warRootPath, object : FileVisitor<Path?> {
-            override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+            override fun preVisitDirectory(dir: Path?, attrs: BasicFileAttributes): FileVisitResult {
                 // create dir in target
                 val relativeSourceDir = warRootPath.relativize(dir).toString()
                 if (relativeSourceDir.isEmpty()) {
@@ -154,7 +154,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 }
             }
 
-            override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+            override fun postVisitDirectory(dir: Path?, exc: IOException?): FileVisitResult {
                 // fix modification time of dir
                 if (exc == null) {
                     val destination = tempDirHtml.resolve(warRootPath.relativize(dir).toString())
@@ -164,14 +164,14 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 return FileVisitResult.CONTINUE
             }
 
-            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+            override fun visitFile(file: Path?, attrs: BasicFileAttributes): FileVisitResult {
                 val destination = tempDirHtml.resolve(warRootPath.relativize(file).toString())
                 Files.copy(file, destination, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
                 return FileVisitResult.CONTINUE
             }
 
-            override fun visitFileFailed(file: Path, ex: IOException?): FileVisitResult {
-                log.error("Unable to copy from WAR to temp directory, file ${file.toAbsolutePath().toString()}, due to '${ex?.getMessage() ?: ex?.javaClass?.getName() ?: "unknown"}'", ex)
+            override fun visitFileFailed(file: Path?, ex: IOException?): FileVisitResult {
+                log.error("Unable to copy from WAR to temp directory, file ${file?.toAbsolutePath().toString()}, due to '${ex?.getMessage() ?: ex?.javaClass?.getName() ?: "unknown"}'", ex)
                 warCopyFailed = true
                 return FileVisitResult.TERMINATE
             }

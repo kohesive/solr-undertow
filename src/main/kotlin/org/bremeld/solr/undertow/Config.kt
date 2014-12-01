@@ -206,7 +206,7 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
 
         fun existsIsWriteable(p: KMemberProperty<ServerConfig, Path>) {
             val dir = p.get(this)
-            if (!Files.exists(dir)) {
+            if (dir.notExists()) {
                 err("${p.name} dir does not exist: ${dir}")
             }
             if (!Files.isWritable(dir)) {
@@ -216,7 +216,7 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
 
         fun existsIsReadable(p: KMemberProperty<ServerConfig, Path>) {
             val dir = p.get(this)
-            if (!Files.exists(dir)) {
+            if (dir.notExists()) {
                 err("${p.name} does not exist: ${dir}")
             }
             if (!Files.isReadable(dir)) {
