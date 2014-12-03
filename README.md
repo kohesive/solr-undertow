@@ -78,12 +78,7 @@ It is recommended only to use the Solr-Undertow configuration file, with occasio
 
 **After configuration loading, the Solr legacy system properties are reset to match the resulting configuration** so that Solr configuration files with variables, and the Solr process will see them as expected.
 
-An example using SOLR_UNDERTOW_OPTS environment variable to override configuration:
-
-```
-export SOLR_UNDERTOW_OPTS="-Dsolr.undertow.httpClusterPort=8080 -Dsolr.undertow.solrHome=./solr-home-sysprop"
-../bin/solr-undertow example.conf
-```
+An example using SOLR_UNDERTOW_OPTS environment variable to override configuration is below...
 
 Other Notes
 ===========
@@ -114,6 +109,13 @@ And an example adding support for JMX:
 
 ```sh
 export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256m -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9901 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
+```
+
+And overriding files in the configuration file and running:
+
+```sh
+export SOLR_UNDERTOW_OPTS="-Dsolr.undertow.httpClusterPort=8080 -Dsolr.undertow.solrHome=./solr-alt-home"
+../bin/solr-undertow example.conf
 ```
 
 #### Logging
