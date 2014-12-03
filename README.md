@@ -78,7 +78,7 @@ It is recommended only to use the Solr-Undertow configuration file, with occasio
 
 **After configuration loading, the Solr legacy system properties are reset to match the resulting configuration** so that Solr configuration files with variables, and the Solr process will see them as expected.
 
-An example using SOLR_UNDERTOW_OPTS environment variable to override configuration is below...
+[An example using SOLR_UNDERTOW_OPTS environment variable](#custom-jvm-parameters) to override configuration is below...
 
 Other Notes
 ===========
