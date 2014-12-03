@@ -105,9 +105,12 @@ public class Server(cfgLoader: ServerConfigLoader) {
 
         val FAILED_DEPLOYMENT = DeployedWarInfo(false, tempDirThisSolr, tempDirHtml, tempDirJars, ClassLoader.getSystemClassLoader())
 
-        val warUri = URI.create("jar:file:${solrWar.toString().replace(File.separatorChar,'/').replace('\\','/')}")
+        val warPathForUri = solrWar.normalize().toAbsolutePath().toString().replace(File.separatorChar,'/').replace('\\','/')
+        val warUri1 = URI("jar:file", warPathForUri.mustStartWith('/'), null)
+
         val warJarFs = try {
-            FileSystems.newFileSystem(warUri, mapOf("create" to "false"))
+           log.warn("  try open ${warUri1}")
+           FileSystems.newFileSystem(warUri1, mapOf("create" to "false"))
         } catch (ex: Throwable) {
             log.error("The WAR file ${solrWar} cannot be opened as a Zip file, due to '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
             return FAILED_DEPLOYMENT

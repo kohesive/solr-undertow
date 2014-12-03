@@ -90,3 +90,20 @@ private fun Int.coerce(range: IntRange) = this.minimum(range.start).maximum(rang
 
 private inline fun Logger.debug(foo: () -> String): Unit = if (this.isDebugEnabled()) this.debug(foo())
 
+private fun String.mustStartWith(prefix: String): String {
+   return if (this.startsWith(prefix)) {
+       this
+   }
+   else {
+       prefix + this
+   }
+}
+
+private fun String.mustStartWith(prefix: Char): String {
+    return if (this.startsWith(prefix)) {
+        this
+    }
+    else {
+        prefix + this
+    }
+}
