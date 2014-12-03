@@ -53,8 +53,8 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 return ServerStartupStatus(false, "WAR file failed to deploy, terminating server")
             }
 
-            val ioThreads = (if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads).minimum(1)
-            val workerThreads = if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads
+            val ioThreads = (if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads).minimum(2)
+            val workerThreads = (if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads).minimum(8)
 
             val handler = AccessLogHandler(buildSolrServletHandler(solrWarDeployment), object : AccessLogReceiver {
                 override fun logMessage(message: String?) {
@@ -62,6 +62,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 }
             }, cfg.accessLogFormat, javaClass<Server>().getClassLoader())
 
+            log.info("Building Undertow server [port:${cfg.httpClusterPort},host:${cfg.httpHost},ioThreads:${ioThreads},workerThreads:${workerThreads}]")
             val server = Undertow.builder()
                     .addHttpListener(cfg.httpClusterPort, cfg.httpHost)
                     .setDirectBuffers(true)
