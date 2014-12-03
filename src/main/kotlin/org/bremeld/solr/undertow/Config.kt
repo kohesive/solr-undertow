@@ -67,40 +67,51 @@ internal val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_SOLR_HOME to OUR_PROP_SOLR_HOME)
 internal val SYS_PROPERTIES_THAT_ARE_PATHS = setOf(SYS_PROP_SOLR_LOG, SYS_PROP_SOLR_HOME)
 
+// These allow substitution of Env variables for unit tests.
+internal var SERVER_ENV_WRAPPER: Map<out Any, Any> = System.getenv()
+internal var SERVER_SYS_WRAPPER: MutableMap<Any, Any> = System.getProperties()
+
 public class ServerConfigLoader(val configFile: Path) {
-    private val solrOverrides = ConfigFactory.parseProperties(getRelevantSystemProperties())!!
+    private val solrSystemOverrides = ConfigFactory.parseProperties(readRelevantProperties(SERVER_SYS_WRAPPER))!!
+    private val solrEnvOverrides = ConfigFactory.parseProperties(readRelevantProperties(SERVER_ENV_WRAPPER))!!
     private val userConfig = ConfigFactory.parseFile(configFile.toFile())!!
-    private val fullConfig = solrOverrides + userConfig
+    private val fullConfig = solrSystemOverrides + userConfig + solrEnvOverrides
 
     val resolvedConfig = ConfigFactory.load(fullConfig, ConfigResolveOptions.noSystem())!! then { config ->
-        setRelevantSystemProperties(config)
+        writeRelevantSystemProperties(config)
     }
 
     fun hasLoggingDir(): Boolean {
         return resolvedConfig.hasPath("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_SOLR_LOG}")
     }
 
-    private fun getRelevantSystemProperties(): Properties {
+    private fun readRelevantProperties(props: Map<out Any, Any>): Properties {
         // copy values from typical Solr system or environment properties into our equivalent configuration item
 
         val p = Properties()
         for (mapping in SOLR_OVERRIDES.entrySet()) {
-            val cfgKey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}"
-            // don't override our own config item set as system property
-            if (System.getProperty(cfgKey) == null) {
-                val value = System.getProperty(mapping.key) ?: System.getenv(mapping.key)
-                if (value != null) {
-                    val adjustedValue = if (mapping.key == SYS_PROP_ZKRUN) "true"
-                                        else value
-                    p.put(cfgKey, adjustedValue)
-                }
+            val (solrPropName, ourPropName) = mapping
+            val ourPropFQName = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${ourPropName}"
+
+            val envPropValue: Any? = if (solrPropName == SYS_PROP_ZKRUN) {
+                val temp = props.get(solrPropName)
+                if (temp != null) "true" else null
+            }
+            else {
+                props.get(solrPropName)
+            }
+
+            // don't override our own config item set as  property
+            val value = props.get(ourPropFQName) ?: envPropValue
+            if (value != null) {
+                p.put(ourPropFQName, value)
             }
         }
 
         return p
     }
 
-    private fun setRelevantSystemProperties(fromConfig: Config) {
+    private fun writeRelevantSystemProperties(fromConfig: Config) {
         // copy our configuration items into Solr system properties that might be looked for later by Solr
         for (mapping in SOLR_OVERRIDES.entrySet()) {
             val cfgKey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}"
@@ -108,18 +119,18 @@ public class ServerConfigLoader(val configFile: Path) {
             if (configValue.exists()) {
                 if (configValue.isNotEmptyString()) {
                     val value = if (SYS_PROPERTIES_THAT_ARE_PATHS.contains(mapping.key)) configValue.asPath(configFile).toString()
-                                else configValue.asString()
-                    System.setProperty(mapping.key, value)
+                    else configValue.asString()
+                    SERVER_SYS_WRAPPER.put(mapping.key, value)
                 }
             }
         }
         val zkRunCfgkey = fromConfig.value("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}")
         if (zkRunCfgkey.notExists() || !zkRunCfgkey.asBoolean()) {
-            System.clearProperty(SYS_PROP_ZKRUN)
+            SERVER_SYS_WRAPPER.remove(SYS_PROP_ZKRUN)
         }
 
         // an extra system property to set
-        System.setProperty(SYS_PROP_JBOSS_LOGGING, "slf4j")
+        SERVER_SYS_WRAPPER.put(SYS_PROP_JBOSS_LOGGING, "slf4j")
     }
 }
 
