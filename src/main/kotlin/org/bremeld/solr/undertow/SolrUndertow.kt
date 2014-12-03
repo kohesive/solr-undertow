@@ -110,7 +110,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
         val warUri1 = URI("jar:file", warPathForUri.mustStartWith('/'), null)
 
         val warJarFs = try {
-           log.warn("  try open ${warUri1}")
+           log.warn("  ${warUri1}")
            FileSystems.newFileSystem(warUri1, mapOf("create" to "false"))
         } catch (ex: Throwable) {
             log.error("The WAR file ${solrWar} cannot be opened as a Zip file, due to '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
