@@ -54,11 +54,19 @@ Two example configurations are provided in the [example directory](example/):
 * [Basic configuration](example/example.conf)
 * [Configuration with request limitting](example/example-ratelimited.conf) (max concurrent requests + max queued requests)
 
-#### System Properties
+#### System and Environment Properties
 
-Settings from the configuration file will be overriden by system properties of the same fully qualified name (i.e. `solr.undertow.zkHost`) but also by the standard Solr system property used with Jetty (i.e. `zkHost` or `jetty.Port`). The following Solr system properties are recognized, and are also set by solr-undertow so that any Solr configuration file using variable substitution will find them as expected:
+When System or Environment variables are used, an order of precedence is used favoring the Solr-Undertow properties over legacy property names from Solr.  Note, not all variables are legal environment variables, and the use of env variables is not recommended, configuration or system properties is best.  Here is the exact order of configuration overriding:
 
-|Solr typical|Solr-Undertow Equivalent|
+* **Solr-Undertow fully qualified** System property
+* **Solr legacy** System property
+* Configuration File **Solr-Undertow** property
+* **Solr-Undertow full qualified** Environment variable  (impossible on systems that do not allow "." in environment variable names)
+* **Solr legacy** Environment variable (only for variables legal on the system)
+
+It is recommended only to use the Solr-Undertow configuration file, with occasional overrides using Solr-Undertow fully qualified property names in SOLR_UNDERTOW_OPTS environment variable.  The following are the properties, Solr legacy and Solr-Undertow fully qualified:
+
+|Solr typical (legacy)|Solr-Undertow Fully Qualified|
 |---|---|
 |jetty.port|solr.undertow.httpClusterPort|
 |zkRun|solr.undertow.zkRun|
@@ -68,7 +76,14 @@ Settings from the configuration file will be overriden by system properties of t
 |solr.solr.home|solrHome|
 |solr.data.dir|(no equivalent, not checked, passes through to Solr)|
 
-The solr-undertow has priority if both are present in system properties; you only need to provide one and the other will be made to match.
+**After configuration loading, the Solr legacy system properties are reset to match the resulting configuration** so that Solr configuration files with variables, and the Solr process will see them as expected.
+
+An example using SOLR_UNDERTOW_OPTS environment variable to override configuration:
+
+```
+export SOLR_UNDERTOW_OPTS="-Dsolr.undertow.httpClusterPort=8080 -Dsolr.undertow.solrHome=./solr-home-sysprop"
+../bin/solr-undertow example.conf
+```
 
 Other Notes
 ===========

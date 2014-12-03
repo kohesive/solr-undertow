@@ -20,7 +20,7 @@ import java.nio.file.Files
 
 public fun main(args: Array<String>) {
     try {
-        if (args.size != 1) {
+        if (args.toList().size() != 1) {   // TODO: go back to args.size after next Kotlin release (> 0.9.206) because the plugin stdlibrary doesn't match my used standard library
             printErrorAndExit("A Configuration file must be passed on the command-line (i.e. /my/path/to/solr-undertow.conf)")
         }
         val configFile = Paths.get(args[0]).toAbsolutePath() verifiedBy { path ->
