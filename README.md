@@ -97,7 +97,7 @@ Other Notes
 
 **For Solr 4.x you can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.3 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.3/solr-4.10.3.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
 
-**For Solr 5.0 use the distributions here, or you can find a `solr.war` inside the official solr distrubtion within the `server/webapps/solr.war` directory.  The WAR file should be renamed to have the version number included, for example `solr-5.0.0.war` and the solr-undertow configuration files updated to match.
+**For Solr 5.0 use the [full solr-undertow distributions](https://github.com/bremeld/solr-undertow/releases)**, or you can find a `solr.war` inside the official solr distrubtion within the `server/webapps/solr.war` directory.  The WAR file should be renamed to have the version number included, for example `solr-5.0.0.war` and the solr-undertow configuration files updated to match.
 
 #### Custom JVM Parameters
 
