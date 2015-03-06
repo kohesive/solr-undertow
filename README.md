@@ -1,9 +1,9 @@
 solr-undertow
 =============
 
-[Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.1 or newer.  Less than 4MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
+[Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.4.0 or newer.  Less than 4MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
 
-Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub.
+Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub supporting versions of Solr 4.4.0 and newer (including 5.0.0).  Might work with earlier releases, but untested.
 
 This application launches a Solr WAR file as a standalone server running a high performance HTTP front-end based on [undertow.io](http://undertow.io) (the engine behind WildFly, the new JBoss).  It has no features of an application server, does nothing more than load Solr servlets and also service the Admin UI.  It is production-quality for a stand-alone Solr server.
 
@@ -17,7 +17,7 @@ Usage is simple, you only need a configuration file and a Solr WAR:
 bin/solr-undertow <configurationFile>
 ```
 
-You can run the included example configuration + Solr 4.10.3 (from the release that includes Solr) using:
+You can run the included example configuration + Solr (from the release that includes each Solr version) using:
 
 ```sh
 bin/solr-undertow example/example.conf
@@ -36,7 +36,7 @@ solr.undertow: {
   solrHome: "./solr-home"
   solrLogs: "./solr-logs"
   tempDir: "./solr-temp"
-  solrVersion: "4.10.3"
+  solrVersion: "5.0.0"
   solrWarFile: ./solr-wars/solr-${solr.undertow.solrVersion}.war
 }
 ```
@@ -95,7 +95,9 @@ Other Notes
 
 #### Solr WAR Files
 
-**You can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.3 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.3/solr-4.10.3.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
+**For Solr 4.x you can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.3 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.3/solr-4.10.3.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
+
+**For Solr 5.0 use the distributions here, or you can find a `solr.war` inside the official solr distrubtion within the `server/webapps/solr.war` directory.  The WAR file should be renamed to have the version number included, for example `solr-5.0.0.war` and the solr-undertow configuration files updated to match.
 
 #### Custom JVM Parameters
 
