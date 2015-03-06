@@ -195,12 +195,23 @@ public class Server(cfgLoader: ServerConfigLoader) {
         val solrZookeeprServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.ZookeeperInfoServlet").asSubclass(javaClass<Servlet>())
         val solrAdminUiServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.LoadAdminUiServlet").asSubclass(javaClass<Servlet>())
         val solrRestApiServletClass = solrWarDeployment.classLoader.loadClass("org.restlet.ext.servlet.ServerServlet").asSubclass(javaClass<Servlet>())
+        val solrRestApiClass = try {
+            solrWarDeployment.classLoader.loadClass("org.apache.solr.rest.SolrSchemaRestApi")
+        } catch (ex: ClassNotFoundException)  {
+            solrWarDeployment.classLoader.loadClass("org.apache.solr.rest.SolrRestApi")
+        }
+        val solrRestConfigApiClass: Class<*>? = try {
+            solrWarDeployment.classLoader.loadClass("org.apache.solr.rest.SolrConfigRestApi")
+        } catch (ex: ClassNotFoundException) {
+            null
+        }
+
 
         // mimic solr web.xml file, minus old deprecated redirects from old UI...
         val deployment = Servlets.deployment()
                 .setClassLoader(solrWarDeployment.classLoader)
                 .setContextPath(cfg.solrContextPath)
-                .setDefaultServletConfig(DefaultServletConfig())
+                .setDefaultServletConfig(SolrDefaultServletConfig())
                 .setDefaultEncoding("UTF-8")
                 .setDeploymentName("solr.war")
                 .setEagerFilterInit(true)
@@ -215,12 +226,18 @@ public class Server(cfgLoader: ServerConfigLoader) {
                         Servlets.servlet("LoadAdminUI", solrAdminUiServletClass)
                                 .addMapping("/admin.html"),
                         Servlets.servlet("SolrRestApi", solrRestApiServletClass)
-                                .addInitParam("org.restlet.application", "org.apache.solr.rest.SolrRestApi")
+                                .addInitParam("org.restlet.application", solrRestApiClass.getName())
                                 .addMapping("/schema/*")
                 )
                 .addMimeMapping(MimeMapping(".xsl", "application/xslt+xml"))
                 .addWelcomePage("admin.html")
                 .setResourceManager(FileResourceManager(solrWarDeployment.htmlDir.toFile(), 1024))
+
+        if (solrRestConfigApiClass != null) {
+            deployment.addServlet(Servlets.servlet("SolrConfigRestApi", solrRestApiServletClass)
+                    .addInitParam("org.restlet.application", solrRestConfigApiClass.getName())
+                    .addMapping("/config/*"))
+        }
 
         log.warn("Initializing Solr, deploying the Servlet Container...")
         val deploymentManager = Servlets.defaultContainer().addDeployment(deployment)
@@ -271,4 +288,26 @@ public class Server(cfgLoader: ServerConfigLoader) {
         }
     }
 }
+
+// TODO:  Undertow says "This class is deprecated, the default servlet should be configured via context params." but not sure what they mean as the alternative
+//        given we are embedded, so think we are stuck with this model.
+
+public class SolrDefaultServletConfig() : DefaultServletConfig() {
+    private val defaultAllowed: Boolean = false
+    private val allowed = setOf("ico", "swf", "js", "css", "png", "jpg", "gif", "html", "htm", "txt", "pdf", "svg")
+    private val disallowed = setOf("class", "jar", "war", "zip", "xml")
+
+    public override fun isDefaultAllowed(): Boolean {
+        return defaultAllowed
+    }
+
+    public override fun getAllowed(): Set<String> {
+        return allowed
+    }
+
+    public override fun getDisallowed(): Set<String> {
+        return disallowed
+    }
+}
+
 

@@ -3,6 +3,9 @@ description "Solr running as Undertow.io servlet"
 buildscript {
     repositories {
         jcenter()
+        maven {
+            url 'http://oss.sonatype.org/content/repositories/snapshots'
+        }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${version_kotlin}"
@@ -35,7 +38,7 @@ tasks.withType(Tar){
 task distWithSolr(type: Tar, dependsOn: distTar) {
     into("${baseName}-${version}-with-solr-${version_solr}")
     with(applicationDistribution)
-    from("example/solr-wars") {
+    from("example/solr-wars/solr-${version_solr}.war") {
         into("example/solr-wars")
     }
     classifier = "with-solr-${version_solr}"
@@ -44,12 +47,18 @@ task distWithSolr(type: Tar, dependsOn: distTar) {
 task distZipWithSolr(type: Zip, dependsOn: distZip) {
     into("${baseName}-${version}-with-solr-${version_solr}")
     with(applicationDistribution)
-    from("example/solr-wars") {
-        exclude("**/README.md")
+    from("example/solr-wars/solr-${version_solr}.war") {
         into("example/solr-wars")
     }
     classifier = "with-solr-${version_solr}"
 }
+
+task(distAll)
+distAll.dependsOn clean
+distAll.dependsOn test
+distAll.dependsOn distWithSolr
+distAll.dependsOn distZipWithSolr
+distAll.dependsOn installApp
 
 applicationDistribution.from("example") {
         into("example")
@@ -61,6 +70,9 @@ applicationDistribution.from("example") {
 
 repositories {
     jcenter()
+    maven {
+        url 'http://oss.sonatype.org/content/repositories/snapshots'
+    }
 }
 
 dependencies {
