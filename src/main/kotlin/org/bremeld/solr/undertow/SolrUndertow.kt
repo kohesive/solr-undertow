@@ -142,7 +142,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
         Files.walkFileTree(warRootPath, object : FileVisitor<Path?> {
             override fun preVisitDirectory(dir: Path?, attrs: BasicFileAttributes): FileVisitResult {
                 // create dir in target
-                val relativeSourceDir = warRootPath.relativize(dir).toString()
+                val relativeSourceDir = warRootPath.relativize(dir!!).toString()
                 if (relativeSourceDir.isEmpty()) {
                     return FileVisitResult.CONTINUE
                 } else if (relativeSourceDir == "WEB-INF/" || relativeSourceDir == "META-INF/") {
@@ -161,7 +161,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
             override fun postVisitDirectory(dir: Path?, exc: IOException?): FileVisitResult {
                 // fix modification time of dir
                 if (exc == null) {
-                    val destination = tempDirHtml.resolve(warRootPath.relativize(dir).toString())
+                    val destination = tempDirHtml.resolve(warRootPath.relativize(dir!!).toString())
                     val lastModTime = Files.getLastModifiedTime(dir)
                     Files.setLastModifiedTime(destination, lastModTime)
                 }
@@ -169,7 +169,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
             }
 
             override fun visitFile(file: Path?, attrs: BasicFileAttributes): FileVisitResult {
-                val destination = tempDirHtml.resolve(warRootPath.relativize(file).toString())
+                val destination = tempDirHtml.resolve(warRootPath.relativize(file!!).toString())
                 Files.copy(file, destination, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
                 return FileVisitResult.CONTINUE
             }

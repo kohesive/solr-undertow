@@ -81,6 +81,7 @@ dependencies {
     compile "com.typesafe:config:${version_typesafe_config}"
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:${version_kotlin}"
+    compile "org.jetbrains.kotlin:kotlin-reflect:${version_kotlin}"
 
     compile "org.slf4j:slf4j-api:${version_slf4j}"
     runtime "ch.qos.logback:logback-classic:${version_logback}"
