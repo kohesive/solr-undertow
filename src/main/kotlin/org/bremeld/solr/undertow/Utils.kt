@@ -1,4 +1,4 @@
-//    Copyright 2014 Bremeld Corp SA (Montevideo, Uruguay)
+//    Copyright 2014, 2015 Bremeld Corp SA (Montevideo, Uruguay)
 //    https://www.linkedin.com/company/bremeld
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,9 @@ import com.typesafe.config.Config
 import java.nio.file.Paths
 import org.slf4j.Logger
 import java.nio.file.Files
+import kotlin.reflect.KMemberProperty
+import kotlin.reflect.KProperty
+import kotlin.reflect.declaredExtensionProperties
 
 private fun printErrorAndExit(msg: String?, errCode: Int = -1) {
     System.err.println(msg ?: "Unknown Error")
@@ -64,13 +67,14 @@ private fun Config.render(): String = this.root().render()
 
 private class ConfiguredValue(val cfg: Config, val key: String) {
     fun asPath(): Path = Paths.get(cfg.getString(key).trim()).toAbsolutePath()
-    fun asPath(relativeTo: Path): Path = relativeTo.resolveSibling(cfg.getString(key).trim()).toAbsolutePath()
+    fun asPathSibling(relativeTo: Path): Path = relativeTo.resolveSibling(cfg.getString(key).trim()).toAbsolutePath()
+    fun asPath(relativeTo: Path): Path = relativeTo.resolve(cfg.getString(key).trim()).toAbsolutePath()
 
     fun asString(): String = cfg.getString(key).trim()
     fun asBoolean(): Boolean = cfg.getBoolean(key)
     fun asInt(): Int = cfg.getInt(key)
     fun asStringList(): List<String> = cfg.getStringList(key)
-    fun asStringArray(): Array<String> = cfg.getStringList(key).copyToArray()
+    fun asStringArray(): Array<String> = cfg.getStringList(key).toTypedArray()
     fun asDefaultedStringList(default: List<String>): List<String> = if (exists()) asStringList() else default
     fun asGuaranteedStringList(): List<String> = if (exists()) asStringList() else listOf()
 
@@ -85,8 +89,6 @@ private class ConfiguredValue(val cfg: Config, val key: String) {
 
 private fun Int.minimum(minVal: Int): Int = Math.max(this, minVal)
 private fun Int.maximum(maxVal: Int): Int = Math.min(this, maxVal)
-private fun Int.coerce(minVal: Int, maxVal: Int) = this.minimum(minVal).maximum(maxVal)
-private fun Int.coerce(range: IntRange) = this.minimum(range.start).maximum(range.end)
 
 private inline fun Logger.debug(foo: () -> String): Unit = if (this.isDebugEnabled()) this.debug(foo())
 

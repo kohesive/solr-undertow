@@ -1,4 +1,4 @@
-//    Copyright 2014 Bremeld Corp SA (Montevideo, Uruguay)
+//    Copyright 2014, 2015 Bremeld Corp SA (Montevideo, Uruguay)
 //    https://www.linkedin.com/company/bremeld
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
@@ -118,7 +118,7 @@ public class ServerConfigLoader(val configFile: Path) {
             val configValue = fromConfig.value(cfgKey)
             if (configValue.exists()) {
                 if (configValue.isNotEmptyString()) {
-                    val value = if (SYS_PROPERTIES_THAT_ARE_PATHS.contains(mapping.key)) configValue.asPath(configFile).toString()
+                    val value = if (SYS_PROPERTIES_THAT_ARE_PATHS.contains(mapping.key)) configValue.asPathSibling(configFile).toString()
                     else configValue.asString()
                     SERVER_SYS_WRAPPER.put(mapping.key, value)
                 }
@@ -150,12 +150,12 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     }
     val zkRun = configured.value(OUR_PROP_ZKRUN).asBoolean()
     val zkHost = configured.value(OUR_PROP_ZKHOST).asString()
-    val solrHome = configured.value(OUR_PROP_SOLR_HOME).asPath(loader.configFile)
-    val solrLogs = configured.value(OUR_PROP_SOLR_LOG).asPath(loader.configFile)
-    val tempDir = configured.value(OUR_PROP_TEMP_DIR).asPath(loader.configFile)
+    val solrHome = configured.value(OUR_PROP_SOLR_HOME).asPathSibling(loader.configFile)
+    val solrLogs = configured.value(OUR_PROP_SOLR_LOG).asPathSibling(loader.configFile)
+    val tempDir = configured.value(OUR_PROP_TEMP_DIR).asPathSibling(loader.configFile)
     val solrVersion = configured.value(OUR_PROP_SOLR_VERSION).asString()
-    val solrWarFile = configured.value(OUR_PROP_SOLR_WAR).asPath(loader.configFile)
-    val libExtDir = configured.value(OUR_PROP_LIBEXT_DIR).asPath(loader.configFile)
+    val solrWarFile = configured.value(OUR_PROP_SOLR_WAR).asPathSibling(loader.configFile)
+    val libExtDir = configured.value(OUR_PROP_LIBEXT_DIR).asPathSibling(loader.configFile)
     val solrContextPath = configured.value(OUR_PROP_HOST_CONTEXT).asString() let { solrContextPath ->
         if (!solrContextPath.startsWith("/")) "/" + solrContextPath else solrContextPath
     }

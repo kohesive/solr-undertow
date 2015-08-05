@@ -29,7 +29,7 @@ class ConfigTests {
         return ServerConfigLoader(tempConfig)
     }
 
-    [Before] fun clearSystemProperties() {
+    @Before fun clearSystemProperties() {
         // make sure no system properties are set that could interfere with test
         System.clearProperty(SYS_PROP_ZKRUN)
         for (mapping in SOLR_OVERRIDES) {
@@ -42,14 +42,14 @@ class ConfigTests {
         SERVER_SYS_WRAPPER = hashMapOf()
     }
 
-    [Test] fun testThatLoggingForJBossIsSetup() {
+    @Test fun testThatLoggingForJBossIsSetup() {
         // the system property for jboss logging should magically appear after configuration
         assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_JBOSS_LOGGING))
         loadConfigFile("")
         assertNotNull(SERVER_SYS_WRAPPER.get(SYS_PROP_JBOSS_LOGGING))
     }
 
-    [Test] fun testNoZkRunOrZkHostEnvSysProp() {
+    @Test fun testNoZkRunOrZkHostEnvSysProp() {
         // if system prop zkRun or zkHost is not set, we should be empty in our configuration, and the system properties should be blank after
         assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKRUN))
         assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
@@ -65,14 +65,14 @@ class ConfigTests {
     }
 
 
-    [Test] fun testZkRunPresent() {
+    @Test fun testZkRunPresent() {
         // if system prop zkRun is set before, our config value should be true, and zkRun should exist after
         SERVER_SYS_WRAPPER = hashMapOf(SYS_PROP_ZKRUN to "")
         assertTrue(makeEmptyConfig().zkRun)
         assertNotNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKRUN))
     }
 
-    [Test] fun testZkHostPresent() {
+    @Test fun testZkHostPresent() {
         val testVal = "one,two,three"
         // if system prop zkHost is set before, our config value should be true, and zkHost should exist after
         SERVER_SYS_WRAPPER = hashMapOf(SYS_PROP_ZKHOST to testVal)
@@ -80,7 +80,7 @@ class ConfigTests {
         assertEquals(testVal, SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
     }
 
-    [Test] fun testZkRunAndZkHostNotPresentButSetByConfig() {
+    @Test fun testZkRunAndZkHostNotPresentButSetByConfig() {
         // system props zkRun and zkhost if absent should appear after our configuration
         val testVal = "one,two,three"
         val cfgHocon = """
@@ -98,7 +98,7 @@ class ConfigTests {
         assertEquals(testVal, SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
     }
 
-    [Test] fun testJettyPortHostSolrHomeSolrLogAbsent() {
+    @Test fun testJettyPortHostSolrHomeSolrLogAbsent() {
         // system props jetty.port, solr.solr.home, solr.log if absent should appear after our configuration
         val testPort = 9999
         val testHome = "/my/solr/home"
@@ -128,7 +128,7 @@ class ConfigTests {
         assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
     }
 
-    [Test] fun testConfigOverridesEnvironment() {
+    @Test fun testConfigOverridesEnvironment() {
         // props if set in config and environment, config will win, and end up in system props
         val testPort = 9999
         val testHome = "/my/solr/home"
@@ -162,7 +162,7 @@ class ConfigTests {
         assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
     }
 
-    [Test] fun testSysPropOverridesConfigOverridesEnvironment() {
+    @Test fun testSysPropOverridesConfigOverridesEnvironment() {
         // props if set in sysprop and config, syspropr will win, and if environment, config will win, and end up in system props
         // and our sys prop overrides legacy solr prop
         val testPort = 9999
@@ -196,7 +196,7 @@ class ConfigTests {
         assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
     }
 
-    [Test] fun testJettyPortSolrHomeSolrLogPresentUsingLegacySysProps() {
+    @Test fun testJettyPortSolrHomeSolrLogPresentUsingLegacySysProps() {
         // system props jetty.port, solr.solr.home, solr.log if set before, should set our config, and should still be set after
         val testPort = 1234
         val testHome = "/already/my/solr/home"
@@ -219,7 +219,7 @@ class ConfigTests {
         assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
     }
 
-    [Test] fun testJettyPortSolrHomeSolrLogPresentUsingOurSysProps() {
+    @Test fun testJettyPortSolrHomeSolrLogPresentUsingOurSysProps() {
         // system props jetty.port, solr.solr.home, solr.log if set before, should set our config, and should still be set after
         val testPort = 1234
         val testHome = "/already/my/solr/home"
@@ -242,7 +242,7 @@ class ConfigTests {
         assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
     }
 
-    [Test] fun testJettyPortSolrHomeSolrLogPresentUsingEnv() {
+    @Test fun testJettyPortSolrHomeSolrLogPresentUsingEnv() {
         // Environment props jetty.port, solr.solr.home, solr.log if set before, should set our config, and should be set as system props after
         val testPort = 1234
         val testHome = "/already/my/solr/home"
@@ -266,7 +266,7 @@ class ConfigTests {
     }
 
 
-    [Test] fun testJettyPortSolrHomeSolrLogPresentUsingMixEnvAndSys() {
+    @Test fun testJettyPortSolrHomeSolrLogPresentUsingMixEnvAndSys() {
         // Environment or System props jetty.port, solr.solr.home, solr.log if set before, should set our config, and should be set as system props after
         val testPort = 1234
         val testHome = "/already/my/solr/home"
@@ -289,7 +289,7 @@ class ConfigTests {
         assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
     }
 
-    [Test] fun testSysPropWinsOverEnv() {
+    @Test fun testSysPropWinsOverEnv() {
         // System property wins over Env property
         val testPort = 1234
         val testHome = "/already/my/solr/home"
@@ -315,7 +315,7 @@ class ConfigTests {
         assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
     }
 
-    [Test] fun testThreadMinimum() {
+    @Test fun testThreadMinimum() {
         run {
             val cfgHocon = """
                     ${SOLR_UNDERTOW_CONFIG_PREFIX} {
@@ -353,7 +353,7 @@ class ConfigTests {
         }
     }
 
-    [Test] fun testPathsAreRelativeToConfig() {
+    @Test fun testPathsAreRelativeToConfig() {
         val testHome = "./home"
         val testLogs = "./log"
         val testWar = "./war/something.war"
