@@ -1,4 +1,4 @@
-//    Copyright 2014 Bremeld Corp SA (Montevideo, Uruguay)
+//    Copyright 2014, 2015 Bremeld Corp SA (Montevideo, Uruguay)
 //    https://www.linkedin.com/company/bremeld
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
@@ -186,7 +186,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
             return FAILED_DEPLOYMENT
         }
 
-        return DeployedWarInfo(true, tempDirThisSolr, tempDirHtml, tempDirJars, URLClassLoader(jarFiles.copyToArray(), ClassLoader.getSystemClassLoader()))
+        return DeployedWarInfo(true, tempDirThisSolr, tempDirHtml, tempDirJars, URLClassLoader(jarFiles.toTypedArray(), ClassLoader.getSystemClassLoader()))
     }
 
     private fun buildSolrServletHandler(solrWarDeployment: DeployedWarInfo): HttpHandler {
@@ -271,8 +271,8 @@ public class Server(cfgLoader: ServerConfigLoader) {
 
     private class RequestLimitHelper(private val rlCfg: RequestLimitConfig) {
         private val requestLimit = RequestLimit(rlCfg.concurrentRequestLimit, rlCfg.maxQueuedRequestLimit)
-        private val exactPredicate = Predicates.paths(*rlCfg.exactPaths.copyToArray())
-        private val suffixPredicate = Predicates.suffixes(*rlCfg.pathSuffixes.copyToArray())
+        private val exactPredicate = Predicates.paths(*rlCfg.exactPaths.toTypedArray())
+        private val suffixPredicate = Predicates.suffixes(*rlCfg.pathSuffixes.toTypedArray())
 
         private fun hasExactPaths(): Boolean = rlCfg.exactPaths.isNotEmpty()
         private fun hasSuffixes(): Boolean = rlCfg.pathSuffixes.isNotEmpty()
