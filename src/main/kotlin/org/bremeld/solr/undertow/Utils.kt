@@ -21,6 +21,7 @@ import com.typesafe.config.Config
 import java.nio.file.Paths
 import org.slf4j.Logger
 import java.nio.file.Files
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KMemberProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.declaredExtensionProperties
@@ -85,6 +86,8 @@ private class ConfiguredValue(val cfg: Config, val key: String) {
 
     fun exists(): Boolean = cfg.hasPath(key)
     fun notExists(): Boolean = !cfg.hasPath(key)
+
+    fun parseAsMilliseconds(): Long = cfg.getDuration(key, TimeUnit.MILLISECONDS)
 }
 
 private fun Int.minimum(minVal: Int): Int = Math.max(this, minVal)

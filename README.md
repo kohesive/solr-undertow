@@ -181,6 +181,13 @@ You can also specify either of these prebuilt formats instead of using macros, a
 #### HTTP IO and Worker threads
 
 **see also:** [Tuning Solr-Undertow](./TUNING.MD)
+
+
+#### Restart / Shutdown
+
+Solr-Undertow listens on the configured shutdown HTTP port (defaults to 9983) for a GET request, single parameter of `password` which must be set to a value matching the configured password.
+
+If the a shutdown password is not configured then a 403 forbidden error will be returned.  If the password does not match, a 401 unauthorized error will be return.  Otherwise on success a 200 HTTP response, and on timeout or other error a 500 HTTP response (although the VM will still exit).  See the [configuration defaults file](src/main/resources/reference.conf) for the `shutdown` section.
  
 Building Your Own Binary
 ========

@@ -58,6 +58,7 @@ internal val OUR_PROP_TEMP_DIR = "tempDir"
 internal val OUR_PROP_LIBEXT_DIR = "libExtDir"
 
 
+
 // system and environment variables that need to be treated the same as our configuration items
 internal val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_ZKRUN to OUR_PROP_ZKRUN,
@@ -141,6 +142,9 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     val httpHost = configured.value(OUR_PROP_HTTP_HOST).asString()
     val httpIoThreads = configured.value(OUR_PROP_HTTP_IO_THREADS).asInt().minimum(0)
     val httpWorkerThreads = configured.value(OUR_PROP_HTTP_WORKER_THREADS).asInt().minimum(0)
+
+    val shutdownConfig = ShutdownConfig(log, configured.nested("shutdown"))
+
     val activeRequestLimits = configured.value("activeRequestLimits").asStringArray()
     val requestLimiters = HashMap<String, RequestLimitConfig>() initializedBy { requestLimiters ->
         val namedConfigs = configured.nested("requestLimits")
@@ -257,6 +261,13 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     }
 }
 
+public class ShutdownConfig(private val log: Logger, private val cfg: Config) {
+    val httpPort = cfg.value("httpPort").asInt()
+    val httpHost = cfg.value("httpHost").asString()
+    val password = cfg.value("password").asString()
+    val gracefulDelay = cfg.value("gracefulDelay").parseAsMilliseconds()
+    val gracefulDelayString = cfg.value("gracefulDelay").asString()
+}
 
 public class RequestLimitConfig(private val log: Logger, val name: String, private val cfg: Config) {
     val exactPaths = cfg.value("exactPaths").asGuaranteedStringList()
