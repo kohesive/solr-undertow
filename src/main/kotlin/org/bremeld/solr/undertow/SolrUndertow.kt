@@ -15,29 +15,42 @@
 
 package org.bremeld.solr.undertow
 
-import kotlin.properties.Delegates
-import io.undertow.servlet.*
-import io.undertow.*
-import io.undertow.servlet.api.*
-import io.undertow.server.HttpHandler
-import io.undertow.server.handlers.RequestLimit
-import io.undertow.server.handlers.resource.FileResourceManager
+import io.undertow.Handlers
+import io.undertow.Undertow
+import io.undertow.UndertowOptions
 import io.undertow.predicate.Predicates
-import java.net.*
-import java.nio.file.*
-import java.util.*
-import java.nio.file.attribute.BasicFileAttributes
-import java.io.*
-import javax.servlet.*
-import org.slf4j.LoggerFactory
+import io.undertow.server.HttpHandler
+import io.undertow.server.HttpServerExchange
+import io.undertow.server.handlers.GracefulShutdownHandler
+import io.undertow.server.handlers.RequestLimit
 import io.undertow.server.handlers.accesslog.AccessLogHandler
 import io.undertow.server.handlers.accesslog.AccessLogReceiver
+import io.undertow.server.handlers.resource.FileResourceManager
+import io.undertow.servlet.Servlets
+import io.undertow.servlet.api.DefaultServletConfig
+import io.undertow.servlet.api.DeploymentManager
+import io.undertow.servlet.api.MimeMapping
+import io.undertow.util.Headers
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.IOException
+import java.net.URI
+import java.net.URL
+import java.net.URLClassLoader
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
+import java.util.ArrayList
+import javax.servlet.DispatcherType
+import javax.servlet.Filter
+import javax.servlet.Servlet
+import kotlin.properties.Delegates
 
 public data class ServerStartupStatus(val started: Boolean, val errorMessage: String)
 
 public class Server(cfgLoader: ServerConfigLoader) {
     val log = LoggerFactory.getLogger("SolrServer")
     val cfg by Delegates.lazy { ServerConfig(log, cfgLoader) }
+    var server: Undertow by Delegates.notNull()
 
     public fun run(): ServerStartupStatus {
         log.warn("Solr + Undertow = small server, happy days, fast, and maybe other cool things.")
@@ -56,17 +69,40 @@ public class Server(cfgLoader: ServerConfigLoader) {
             val ioThreads = (if (cfg.httpIoThreads == 0) Runtime.getRuntime().availableProcessors() else cfg.httpIoThreads).minimum(2)
             val workerThreads = (if (cfg.httpWorkerThreads == 0) Runtime.getRuntime().availableProcessors() * 8 else cfg.httpWorkerThreads).minimum(8)
 
-            val handler = AccessLogHandler(buildSolrServletHandler(solrWarDeployment), object : AccessLogReceiver {
+            val (servletDeploymentMgr, servletHandler) = buildSolrServletHandler(solrWarDeployment)
+
+            val loggedHandler = AccessLogHandler(servletHandler, object : AccessLogReceiver {
                 override fun logMessage(message: String?) {
                     cfg.accessLogger.info(message)
                 }
             }, cfg.accessLogFormat, javaClass<Server>().getClassLoader())
 
+            val gracefulShutdownWrapperHandler = Handlers.gracefulShutdown(loggedHandler)
+
+            // ensure we attempt to close things nicely on termination
+            val gracefulShutdownHook = Thread() {
+                if (servletDeploymentMgr.getState() == DeploymentManager.State.STARTED) {
+                    log.warn("Shutdown Hook triggered:  Undeploying servlets...")
+                    val wasGraceful = shutdownNicely(servletDeploymentMgr, gracefulShutdownWrapperHandler)
+                    if (wasGraceful) {
+                        log.warn("Undeploy complete and graceful.")
+                    } else {
+                        log.error("Undeploy complete, but shutdown was not graceful.")
+                    }
+                } else {
+                    log.warn("Shutdown Hook triggered: servlets already undeployed.")
+                }
+            }
+            Runtime.getRuntime().addShutdownHook(gracefulShutdownHook)
+
+            val shutdownRequestHandler = ShutdownRequestHandler(servletDeploymentMgr, gracefulShutdownWrapperHandler)
+
             log.info("Building Undertow server [port:${cfg.httpClusterPort},host:${cfg.httpHost},ioThreads:${ioThreads},workerThreads:${workerThreads}]")
-            val server = Undertow.builder()
+            server = Undertow.builder()
                     .addHttpListener(cfg.httpClusterPort, cfg.httpHost)
+                    .addHttpListener(cfg.shutdownConfig.httpPort, cfg.shutdownConfig.httpHost, shutdownRequestHandler)
                     .setDirectBuffers(true)
-                    .setHandler(handler)
+                    .setHandler(gracefulShutdownWrapperHandler)
                     .setIoThreads(ioThreads)
                     .setWorkerThreads(workerThreads)
                     .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, cfg.accessLogEnableRequestTiming)
@@ -76,6 +112,12 @@ public class Server(cfgLoader: ServerConfigLoader) {
             server.start()
             val listeningUrl = "http://${cfg.httpHost}:${cfg.httpClusterPort}${cfg.solrContextPath}"
             log.warn("Undertow HTTP Server started, listening on ${listeningUrl}")
+
+            val shutdownUrl = "http://${cfg.shutdownConfig.httpHost}:${cfg.shutdownConfig.httpPort}?password=*****"
+            log.warn("Shutdown port configured as ${shutdownUrl} with graceful delay of ${cfg.shutdownConfig.gracefulDelayString}")
+            if (cfg.shutdownConfig.password.isNullOrBlank()) {
+                log.warn("Shutdown password is not configured, therefore shutdown requests via HTTP will fail.")
+            }
 
             log.info("Loading one Solr admin page to confirm not in a wait state...")
             // trigger a Solr servlet in case Solr is waiting to start still
@@ -91,6 +133,59 @@ public class Server(cfgLoader: ServerConfigLoader) {
     }
 
     private data class DeployedWarInfo(val successfulDeploy: Boolean, val cacheDir: Path, val htmlDir: Path, val libDir: Path, val classLoader: ClassLoader)
+    private data class ServletDeploymentAndHandler(val deploymentManager: DeploymentManager, val pathHandler: HttpHandler)
+
+    private inner class ShutdownRequestHandler(val servletDeploymentMgr: DeploymentManager, val gracefulShutdownWrapperHandler: GracefulShutdownHandler) : HttpHandler {
+        override fun handleRequest(exchange: HttpServerExchange) {
+            if (cfg.shutdownConfig.password.isNullOrBlank()) {
+                exchange.setResponseCode(403).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
+                exchange.getResponseSender().send("forbidden")
+                log.error("Forbidden attempt to talk to shutdown port")
+            } else if (exchange.getQueryParameters().get("password")?.firstOrNull() != cfg.shutdownConfig.password) {
+                exchange.setResponseCode(401).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
+                exchange.getResponseSender().send("unauthorized")
+                log.error("Unauthorized attempt to talk to shutdown port")
+            } else {
+                if (exchange.isInIoThread()) {
+                    exchange.dispatch(this);
+                    return;
+                }
+
+                log.warn("Shutdown requested via shutdown port...")
+                val wasGraceful = shutdownNicely(servletDeploymentMgr, gracefulShutdownWrapperHandler)
+                if (wasGraceful) {
+                    try {
+                        exchange.setResponseCode(200).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
+                        exchange.getResponseSender().send("OK")
+                    } finally {
+                        server.stop()
+                        log.warn("Undeploy complete and graceful.")
+                    }
+                } else {
+                    try {
+                        exchange.setResponseCode(500).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
+                        exchange.getResponseSender().send("ERROR")
+                    } finally {
+                        server.stop()
+                        log.error("Undeploy complete, but shutdown was not graceful.")
+                        System.exit(1)
+                    }
+                }
+
+            }
+        }
+    }
+
+    private fun shutdownNicely(servletDeploymentMgr: DeploymentManager, gracefulShutdownWrapperHandler: GracefulShutdownHandler): Boolean {
+        // block traffic first
+        gracefulShutdownWrapperHandler.shutdown()
+        // wait for a moment for things to finish that are not blocked
+        val wasGraceful = gracefulShutdownWrapperHandler.awaitShutdown(cfg.shutdownConfig.gracefulDelay)
+        // undeploy and hope everyone closes down nicely
+        servletDeploymentMgr.stop()
+        servletDeploymentMgr.undeploy()
+        return wasGraceful
+    }
 
     private fun deployWarFileToCache(solrWar: Path): DeployedWarInfo {
         log.warn("Extracting WAR file: ${solrWar}")
@@ -106,12 +201,12 @@ public class Server(cfgLoader: ServerConfigLoader) {
 
         val FAILED_DEPLOYMENT = DeployedWarInfo(false, tempDirThisSolr, tempDirHtml, tempDirJars, ClassLoader.getSystemClassLoader())
 
-        val warPathForUri = solrWar.normalize().toAbsolutePath().toString().replace(File.separatorChar,'/').replace('\\','/')
+        val warPathForUri = solrWar.normalize().toAbsolutePath().toString().replace(File.separatorChar, '/').replace('\\', '/')
         val warUri1 = URI("jar:file", warPathForUri.mustStartWith('/'), null)
 
         val warJarFs = try {
-           log.warn("  ${warUri1}")
-           FileSystems.newFileSystem(warUri1, mapOf("create" to "false"))
+            log.warn("  ${warUri1}")
+            FileSystems.newFileSystem(warUri1, mapOf("create" to "false"))
         } catch (ex: Throwable) {
             log.error("The WAR file ${solrWar} cannot be opened as a Zip file, due to '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
             return FAILED_DEPLOYMENT
@@ -189,7 +284,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
         return DeployedWarInfo(true, tempDirThisSolr, tempDirHtml, tempDirJars, URLClassLoader(jarFiles.toTypedArray(), ClassLoader.getSystemClassLoader()))
     }
 
-    private fun buildSolrServletHandler(solrWarDeployment: DeployedWarInfo): HttpHandler {
+    private fun buildSolrServletHandler(solrWarDeployment: DeployedWarInfo): ServletDeploymentAndHandler {
         // load all by name so we have no direct dependency on Solr
         val solrDispatchFilterClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.SolrDispatchFilter").asSubclass(javaClass<Filter>())
         val solrZookeeprServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.ZookeeperInfoServlet").asSubclass(javaClass<Servlet>())
@@ -197,7 +292,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
         val solrRestApiServletClass = solrWarDeployment.classLoader.loadClass("org.restlet.ext.servlet.ServerServlet").asSubclass(javaClass<Servlet>())
         val solrRestApiClass = try {
             solrWarDeployment.classLoader.loadClass("org.apache.solr.rest.SolrSchemaRestApi")
-        } catch (ex: ClassNotFoundException)  {
+        } catch (ex: ClassNotFoundException) {
             solrWarDeployment.classLoader.loadClass("org.apache.solr.rest.SolrRestApi")
         }
         val solrRestConfigApiClass: Class<*>? = try {
@@ -259,14 +354,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
         val pathHandler = Handlers.path(Handlers.redirect(cfg.solrContextPath))
                 .addPrefixPath(cfg.solrContextPath, wrappedHandlers)
 
-        // ensure we attempt to close things nicely on termination
-        Runtime.getRuntime().addShutdownHook(Thread() {
-            log.warn("Undeploying servlets...")
-            deploymentManager.undeploy()
-            log.warn("Undeploy complete.")
-        })
-
-        return pathHandler
+        return ServletDeploymentAndHandler(deploymentManager, pathHandler)
     }
 
     private class RequestLimitHelper(private val rlCfg: RequestLimitConfig) {
