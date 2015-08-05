@@ -1,7 +1,7 @@
 solr-undertow
 =============
 
-[Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.x or 5.x.  Less than 4MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
+[Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.x or 5.x.  Less than 8MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
 
 Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub supporting versions of Solr 4.x and 5.x.  Releases before 4.4.0 are untested, but should work.
 
@@ -36,7 +36,7 @@ solr.undertow: {
   solrHome: "./solr-home"
   solrLogs: "./solr-logs"
   tempDir: "./solr-temp"
-  solrVersion: "5.0.0"
+  solrVersion: "5.2.1"
   solrWarFile: ./solr-wars/solr-${solr.undertow.solrVersion}.war
 }
 ```
@@ -97,7 +97,7 @@ Other Notes
 
 **For Solr 4.x you can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.4 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.4/solr-4.10.4.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
 
-**For Solr 5.0 use the [full solr-undertow distributions](https://github.com/bremeld/solr-undertow/releases)**, or you can find a `solr.war` inside the official solr distrubtion within the `server/webapps/solr.war` directory.  The WAR file should be renamed to have the version number included, for example `solr-5.0.0.war` and the solr-undertow configuration files updated to match.
+**For Solr 5.x use the [full solr-undertow distributions](https://github.com/bremeld/solr-undertow/releases)**, or you can find a `solr.war` inside the official solr distrubtion within the `server/webapps/solr.war` directory.  The WAR file should be renamed to have the version number included, for example `solr-5.2.1.war` and the solr-undertow configuration files updated to match.
 
 #### Custom JVM Parameters
 

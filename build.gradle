@@ -37,16 +37,47 @@ tasks.withType(Tar){
 
 task distWithSolr(type: Tar, dependsOn: distTar) {
     into("${baseName}-${version}-with-solr-${version_solr}")
-    with(applicationDistribution)
+    from(project.file("src/dist"))
+    into("lib") {
+        from(jar)
+        from(project.configurations.runtime)
+    }
+    into("bin") {
+        from(startScripts)
+        fileMode = 0755
+    }
+    from("example") {
+        into("example")
+        exclude("**/.ignore")
+        exclude("solr-temp/4*")
+        exclude("solr-logs/solr.log")
+        exclude("solr-wars/*.war")
+    }
     from("example/solr-wars/solr-${version_solr}.war") {
         into("example/solr-wars")
     }
     classifier = "with-solr-${version_solr}"
 }
 
+// TODO: make this copyspec work as shared between dist TAR and ZIP, and figure out the application plugin change with new distribution plugin base
 task distZipWithSolr(type: Zip, dependsOn: distZip) {
     into("${baseName}-${version}-with-solr-${version_solr}")
-    with(applicationDistribution)
+    from(project.file("src/dist"))
+    into("lib") {
+        from(jar)
+        from(project.configurations.runtime)
+    }
+    into("bin") {
+        from(startScripts)
+        fileMode = 0755
+    }
+    from("example") {
+        into("example")
+        exclude("**/.ignore")
+        exclude("solr-temp/4*")
+        exclude("solr-logs/solr.log")
+        exclude("solr-wars/*.war")
+    }
     from("example/solr-wars/solr-${version_solr}.war") {
         into("example/solr-wars")
     }
@@ -58,14 +89,20 @@ distAll.dependsOn clean
 distAll.dependsOn test
 distAll.dependsOn distWithSolr
 distAll.dependsOn distZipWithSolr
-distAll.dependsOn installApp
+distAll.dependsOn installDist
 
-applicationDistribution.from("example") {
-        into("example")
-        exclude("**/.ignore")
-        exclude("solr-temp/4*")
-        exclude("solr-logs/solr.log")
-        exclude("solr-wars/*.war")
+distributions {
+    main {
+        contents {
+            from("example") {
+                into("example")
+                exclude("**/.ignore")
+                exclude("solr-temp/4*")
+                exclude("solr-logs/solr.log")
+                exclude("solr-wars/*.war")
+            }
+        }
+    }
 }
 
 repositories {
