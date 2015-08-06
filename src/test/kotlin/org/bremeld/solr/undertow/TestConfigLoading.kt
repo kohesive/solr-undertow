@@ -12,7 +12,7 @@ import org.junit.Test
 import java.nio.file.Paths
 import java.nio.file.Path
 
-class ConfigTests {
+class TestConfigLoading {
     val log = LoggerFactory.getLogger("ConfigTests")
 
     fun makeEmptyConfig(): ServerConfig {
