@@ -185,7 +185,7 @@ You can also specify either of these prebuilt formats instead of using macros, a
 **see also:** [Tuning Solr-Undertow](./TUNING.MD)
 
 
-#### Restart / Shutdown
+#### Scripting Startup / Shutdown
 
 Solr-Undertow listens on the configured shutdown HTTP port (defaults to 9983) for a GET request, single parameter of `password` which must be set to a value matching the configured password.
 
@@ -196,6 +196,8 @@ An example of sending a shutdown command when port is configured as `9983` and p
 ```
 curl -X GET http://localhost:9983?password=diediedie
 ```
+
+A user created example of scripting can be seen in a [GIST from @magicdude4eva](https://gist.github.com/magicdude4eva/3b5fec150fbcaafdc34c) where the stop script properly checks exit codes, and does a kill command against the `PID` if the graceful shutdown request fails.
  
 Building Your Own Binary
 ========
