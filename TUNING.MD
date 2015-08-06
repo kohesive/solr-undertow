@@ -5,7 +5,7 @@ There are not many tunable paremeters, mostly the IO and Worker threads, the JDK
 
 #### Java Garbage Collection
 
-Use JDK 1.7 or 1.8 and start with no garbage collection parameters.  Trust G1 until it fails, then tune from there.  A lot of Solr information online is relevante for JDK 1.6 and not as much newer JVMs.
+If using JDK 1.7 start with no garbage collection parameters.  Trust G1 until it fails (unless on 32 bit then do NOT use G1 as it causes problems with Lucene), then tune from there.  For JDK 1.8 read this article: https://wiki.apache.org/solr/ShawnHeisey.  A lot of other Solr information online is relevante for JDK 1.6 and not as much newer JVMs.  Be warned, Solr 6 will only support JDK 1.8 and higher.
 
 Watch for JVM heaps that are larger than needed.  Start with a good size heap, monitor with JConsole to see where the heap size is after GC, and give it some head room for transient data used during queries.  Better to start high and tune downwards.
 
