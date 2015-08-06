@@ -1,6 +1,8 @@
 solr-undertow
 =============
 
+[![Join the chat at https://gitter.im/bremeld/solr-undertow](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/bremeld/solr-undertow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.x or 5.x.  Less than 8MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
 
 Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub supporting versions of Solr 4.x and 5.x.  Releases before 4.4.0 are untested, but should work.
