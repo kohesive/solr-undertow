@@ -15,16 +15,19 @@
 
 package org.bremeld.solr.undertow
 
-import kotlin.reflect.KMemberProperty
 import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import kotlin.reflect.KMemberProperty
 import org.slf4j.Logger
 import java.nio.file.Files
 import java.util.HashMap
 import java.util.Properties
-import com.typesafe.config.ConfigResolveOptions
 import java.nio.file.Path
 import org.slf4j.LoggerFactory
+import uy.klutter.config.typesafe.*
+import uy.klutter.core.common.initializedBy
+import uy.klutter.core.jdk.minimum
+import uy.klutter.core.jdk7.notExists
+import java.util.concurrent.TimeUnit
 
 internal val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
 
@@ -73,12 +76,15 @@ internal var SERVER_ENV_WRAPPER: Map<out Any, Any> = System.getenv()
 internal var SERVER_SYS_WRAPPER: MutableMap<Any, Any> = System.getProperties()
 
 public class ServerConfigLoader(val configFile: Path) {
-    private val solrSystemOverrides = ConfigFactory.parseProperties(readRelevantProperties(SERVER_SYS_WRAPPER))!!
-    private val solrEnvOverrides = ConfigFactory.parseProperties(readRelevantProperties(SERVER_ENV_WRAPPER))!!
-    private val userConfig = ConfigFactory.parseFile(configFile.toFile())!!
-    private val fullConfig = solrSystemOverrides + userConfig + solrEnvOverrides
-
-    val resolvedConfig = ConfigFactory.load(fullConfig, ConfigResolveOptions.noSystem())!! then { config ->
+    // our config chain wants Env variables to override Reference Config because that is how Solr would work,
+    // but then explicit configuration properties override those, and any system properties override everything.
+    //
+    // No configuration variables are resolved until the end, so a variable can be used in a lower level, and fulfilled
+    // by a higher.
+    val resolvedConfig = loadConfig(PropertiesAsConfig(readRelevantProperties(SERVER_SYS_WRAPPER)),
+                                    FileConfig(configFile.toFile()),
+                                    PropertiesAsConfig(readRelevantProperties(SERVER_ENV_WRAPPER)),
+                                    ReferenceConfig()) then { config ->
         writeRelevantSystemProperties(config)
     }
 
@@ -265,13 +271,13 @@ public class ShutdownConfig(private val log: Logger, private val cfg: Config) {
     val httpPort = cfg.value("httpPort").asInt()
     val httpHost = cfg.value("httpHost").asString()
     val password = cfg.value("password").asString()
-    val gracefulDelay = cfg.value("gracefulDelay").parseAsMilliseconds()
+    val gracefulDelay = cfg.value("gracefulDelay").parseDuration(TimeUnit.MILLISECONDS)
     val gracefulDelayString = cfg.value("gracefulDelay").asString()
 }
 
 public class RequestLimitConfig(private val log: Logger, val name: String, private val cfg: Config) {
-    val exactPaths = cfg.value("exactPaths").asGuaranteedStringList()
-    val pathSuffixes = cfg.value("pathSuffixes").asGuaranteedStringList()
+    val exactPaths = cfg.value("exactPaths").asStringListOrEmpty()
+    val pathSuffixes = cfg.value("pathSuffixes").asStringListOrEmpty()
     val concurrentRequestLimit = cfg.value("concurrentRequestLimit").asInt().minimum(-1)
     val maxQueuedRequestLimit = cfg.value("maxQueuedRequestLimit").asInt().minimum(-1)
 
