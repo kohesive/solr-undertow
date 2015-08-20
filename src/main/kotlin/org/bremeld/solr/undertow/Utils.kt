@@ -31,84 +31,9 @@ private fun printErrorAndExit(msg: String?, errCode: Int = -1) {
     System.exit(errCode)
 }
 
-public fun Path.exists(): Boolean = Files.exists(this)
-public fun Path.notExists(): Boolean = !this.exists()
-
-public fun Path.deleteRecursive(): Unit = delDirRecurse(this.toFile())
-public fun File.deleteRecursive(): Unit = delDirRecurse(this)
-
-private fun delDirRecurse(f: File): Unit {
-    if (f.isDirectory()) {
-        for (c in f.listFiles()) {
-            delDirRecurse(c)
-        }
-    }
-    f.delete()
-}
-
-private fun <T> T.verifiedBy(verifyWith: (T) -> Unit): T {
-    verifyWith(this)
-    return this
-}
-
-private fun <T> T.initializedBy(initWith: (T) -> Unit): T {
-    initWith(this)
-    return this
-}
-
 private fun <T> T.then(initWith: (T) -> Unit): T {
     initWith(this)
     return this
 }
 
-private fun Config.plus(fallback: Config): Config = this.withFallback(fallback)
-private fun Config.value(key: String): ConfiguredValue = ConfiguredValue(this, key)
-private fun Config.nested(key: String): Config = this.getConfig(key)
-private fun Config.render(): String = this.root().render()
-
-private class ConfiguredValue(val cfg: Config, val key: String) {
-    fun asPath(): Path = Paths.get(cfg.getString(key).trim()).toAbsolutePath()
-    fun asPathSibling(relativeTo: Path): Path = relativeTo.resolveSibling(cfg.getString(key).trim()).toAbsolutePath()
-    fun asPath(relativeTo: Path): Path = relativeTo.resolve(cfg.getString(key).trim()).toAbsolutePath()
-
-    fun asString(): String = cfg.getString(key).trim()
-    fun asBoolean(): Boolean = cfg.getBoolean(key)
-    fun asInt(): Int = cfg.getInt(key)
-    fun asStringList(): List<String> = cfg.getStringList(key)
-    fun asStringArray(): Array<String> = cfg.getStringList(key).toTypedArray()
-    fun asDefaultedStringList(default: List<String>): List<String> = if (exists()) asStringList() else default
-    fun asGuaranteedStringList(): List<String> = if (exists()) asStringList() else listOf()
-
-    fun isZero(): Boolean = asInt() == 0
-
-    fun isEmptyString(): Boolean = notExists() || asString().isEmpty()
-    fun isNotEmptyString(): Boolean = exists() && asString().isNotEmpty()
-
-    fun exists(): Boolean = cfg.hasPath(key)
-    fun notExists(): Boolean = !cfg.hasPath(key)
-
-    fun parseAsMilliseconds(): Long = cfg.getDuration(key, TimeUnit.MILLISECONDS)
-}
-
-private fun Int.minimum(minVal: Int): Int = Math.max(this, minVal)
-private fun Int.maximum(maxVal: Int): Int = Math.min(this, maxVal)
-
 private inline fun Logger.debug(foo: () -> String): Unit = if (this.isDebugEnabled()) this.debug(foo())
-
-private fun String.mustStartWith(prefix: String): String {
-   return if (this.startsWith(prefix)) {
-       this
-   }
-   else {
-       prefix + this
-   }
-}
-
-private fun String.mustStartWith(prefix: Char): String {
-    return if (this.startsWith(prefix)) {
-        this
-    }
-    else {
-        prefix + this
-    }
-}

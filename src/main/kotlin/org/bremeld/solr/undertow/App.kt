@@ -15,6 +15,8 @@
 
 package org.bremeld.solr.undertow
 
+import uy.klutter.core.common.verifiedBy
+import uy.klutter.core.jdk7.notExists
 import java.nio.file.Paths
 import java.nio.file.Files
 

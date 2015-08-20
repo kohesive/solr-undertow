@@ -115,6 +115,8 @@ repositories {
 dependencies {
     compile "io.undertow:undertow-servlet:${version_undertow}"
 
+    compile "uy.klutter:klutter-config-typesafe-jdk7:${version_klutter}"
+    compile "uy.klutter:klutter-core-jdk7:${version_klutter}"
     compile "com.typesafe:config:${version_typesafe_config}"
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:${version_kotlin}"
