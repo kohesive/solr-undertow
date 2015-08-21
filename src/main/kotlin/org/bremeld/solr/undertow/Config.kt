@@ -24,6 +24,10 @@ import java.util.Properties
 import java.nio.file.Path
 import org.slf4j.LoggerFactory
 import uy.klutter.config.typesafe.*
+import uy.klutter.config.typesafe.ReferenceConfig
+import uy.klutter.config.typesafe.jdk7.*
+import uy.klutter.config.typesafe.jdk7.FileConfig
+import uy.klutter.config.typesafe.loadConfig
 import uy.klutter.core.common.initializedBy
 import uy.klutter.core.jdk.minimum
 import uy.klutter.core.jdk7.notExists
@@ -82,7 +86,7 @@ public class ServerConfigLoader(val configFile: Path) {
     // No configuration variables are resolved until the end, so a variable can be used in a lower level, and fulfilled
     // by a higher.
     val resolvedConfig = loadConfig(PropertiesAsConfig(readRelevantProperties(SERVER_SYS_WRAPPER)),
-                                    FileConfig(configFile.toFile()),
+                                    FileConfig(configFile),
                                     PropertiesAsConfig(readRelevantProperties(SERVER_ENV_WRAPPER)),
                                     ReferenceConfig()) then { config ->
         writeRelevantSystemProperties(config)

@@ -34,7 +34,7 @@ import io.undertow.util.Headers
 import org.slf4j.LoggerFactory
 import uy.klutter.core.jdk.minimum
 import uy.klutter.core.jdk.mustStartWith
-import uy.klutter.core.jdk7.deleteRecursive
+import uy.klutter.core.jdk7.deleteRecursively
 import uy.klutter.core.jdk7.notExists
 import java.io.File
 import java.io.IOException
@@ -198,7 +198,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
         val tempDirHtml = tempDirThisSolr.resolve("html-root")
         val tempDirJars = tempDirThisSolr.resolve("lib")
 
-        tempDirThisSolr.deleteRecursive()
+        tempDirThisSolr.deleteRecursively()
         Files.createDirectories(tempDirThisSolr)
         Files.createDirectories(tempDirHtml)
         Files.createDirectories(tempDirJars)
