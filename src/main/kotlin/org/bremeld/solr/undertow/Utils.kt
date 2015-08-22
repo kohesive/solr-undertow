@@ -15,16 +15,7 @@
 
 package org.bremeld.solr.undertow
 
-import java.nio.file.Path
-import java.io.File
-import com.typesafe.config.Config
-import java.nio.file.Paths
 import org.slf4j.Logger
-import java.nio.file.Files
-import java.util.concurrent.TimeUnit
-import kotlin.reflect.KMemberProperty
-import kotlin.reflect.KProperty
-import kotlin.reflect.declaredExtensionProperties
 
 private fun printErrorAndExit(msg: String?, errCode: Int = -1) {
     System.err.println(msg ?: "Unknown Error")
