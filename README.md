@@ -5,6 +5,8 @@ solr-undertow
 
 [Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.x or 5.x.  Less than 8MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
 
+**NOTE:** Solr 5.3 no longer distributes the WAR file, but don't worry, we will support it using the full distribution shortly.  Track the issue #26 to see when that work is done!  And just because Solr drops the WAR doesn't mean that they have improved the container, so far they have just hidden it -- keping Jetty under the covers and harder-to-tune 10,000 default threads.
+
 Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub supporting versions of Solr 4.x and 5.x.  Releases before 4.4.0 are untested, but should work.
 
 This application launches a Solr WAR file as a standalone server running a high performance HTTP front-end based on [undertow.io](http://undertow.io) (the engine behind WildFly, the new JBoss).  It has no features of an application server, does nothing more than load Solr servlets and also service the Admin UI.  It is production-quality for a stand-alone Solr server.
