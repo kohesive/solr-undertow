@@ -33,8 +33,11 @@ import io.undertow.servlet.api.MimeMapping
 import io.undertow.util.Headers
 import org.slf4j.LoggerFactory
 import uy.klutter.core.jdk.minimum
+import uy.klutter.core.jdk.mustNotEndWith
+import uy.klutter.core.jdk.mustNotStartWith
 import uy.klutter.core.jdk.mustStartWith
 import uy.klutter.core.jdk7.deleteRecursively
+import uy.klutter.core.jdk7.exists
 import uy.klutter.core.jdk7.notExists
 import java.io.File
 import java.io.IOException
@@ -65,7 +68,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
             }
             cfg.print()
 
-            val solrWarDeployment = deployWarFileToCache(cfg.solrWarFile)
+            val solrWarDeployment = deploySolrDistributionToCache(cfg.solrWarFile)
             if (!solrWarDeployment.successfulDeploy) {
                 return ServerStartupStatus(false, "WAR file failed to deploy, terminating server")
             }
@@ -136,7 +139,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
         }
     }
 
-    private data class DeployedWarInfo(val successfulDeploy: Boolean, val cacheDir: Path, val htmlDir: Path, val libDir: Path, val classLoader: ClassLoader)
+    private data class DeployedDistributionInfo(val successfulDeploy: Boolean, val cacheDir: Path, val htmlDir: Path, val libDir: Path, val classLoader: ClassLoader)
     private data class ServletDeploymentAndHandler(val deploymentManager: DeploymentManager, val pathHandler: HttpHandler)
 
     private inner class ShutdownRequestHandler(val servletDeploymentMgr: DeploymentManager, val gracefulShutdownWrapperHandler: GracefulShutdownHandler) : HttpHandler {
@@ -191,8 +194,8 @@ public class Server(cfgLoader: ServerConfigLoader) {
         return wasGraceful
     }
 
-    private fun deployWarFileToCache(solrWar: Path): DeployedWarInfo {
-        log.warn("Extracting WAR file: ${solrWar}")
+    private fun deploySolrDistributionToCache(solrDistribution: Path): DeployedDistributionInfo {
+        log.warn("Extracting Solr from file: ${solrDistribution}")
 
         val tempDirThisSolr = cfg.tempDir.resolve(cfg.solrVersion)
         val tempDirHtml = tempDirThisSolr.resolve("html-root")
@@ -203,23 +206,59 @@ public class Server(cfgLoader: ServerConfigLoader) {
         Files.createDirectories(tempDirHtml)
         Files.createDirectories(tempDirJars)
 
-        val FAILED_DEPLOYMENT = DeployedWarInfo(false, tempDirThisSolr, tempDirHtml, tempDirJars, ClassLoader.getSystemClassLoader())
+        val FAILED_DEPLOYMENT = DeployedDistributionInfo(false, tempDirThisSolr, tempDirHtml, tempDirJars, ClassLoader.getSystemClassLoader())
 
-        val warPathForUri = solrWar.normalize().toAbsolutePath().toString().replace(File.separatorChar, '/').replace('\\', '/')
-        val warUri1 = URI("jar:file", warPathForUri.mustStartWith('/'), null)
+        val normalizedPathToDistribution = solrDistribution.normalize().toAbsolutePath()
+        val unixStylePathForUri = normalizedPathToDistribution.toString().replace(File.separatorChar, '/').replace('\\', '/')
 
-        val warJarFs = try {
-            log.warn("  ${warUri1}")
-            FileSystems.newFileSystem(warUri1, mapOf("create" to "false"))
-        } catch (ex: Throwable) {
-            log.error("The WAR file ${solrWar} cannot be opened as a Zip file, due to '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
-            return FAILED_DEPLOYMENT
+        val (warLibPath, warRootPath) = if (unixStylePathForUri.endsWith(".zip")) {
+            val checkZip = URI("jar:file", unixStylePathForUri.mustStartWith('/'), null)
+            log.warn("  ${checkZip}")
+            val checkZipFs = FileSystems.newFileSystem(checkZip, mapOf("create" to "false"))
+            val checkRootOfZip = checkZipFs.getPath("/")
+            val rootDir = Files.newDirectoryStream(checkRootOfZip).firstOrNull()
+            if (rootDir != null) {
+                val firstLevelDir = rootDir.getName(0).toString().mustNotStartWith('/').mustNotEndWith('/')
+                val checkInnerWarFilename = "/${firstLevelDir}/server/webapps/solr.war"
+                val checkInnerWar = checkZipFs.getPath(checkInnerWarFilename)
+                if (checkInnerWar.exists()) {
+                    val tempWar = tempDirThisSolr.resolve("extracted-solr.war")
+                    Files.copy(checkInnerWar, tempWar, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+                    val warUri = URI("jar:file", tempWar.toString().mustStartWith('/'), null)
+
+                    val warJarFs = try {
+                        log.warn("  ${warUri}")
+                        FileSystems.newFileSystem(warUri, mapOf("create" to "false"))
+                    } catch (ex: Throwable) {
+                        log.error("The extracted distribution WAR file from ${solrDistribution} cannot be opened as a Zip file, due to '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
+                        return FAILED_DEPLOYMENT
+                    }
+                    Pair(warJarFs.getPath("/WEB-INF/lib/"), warJarFs.getPath("/"))
+                } else {
+                    val checkInnerDir = checkZipFs.getPath("/${firstLevelDir}/server/solr-webapp/webapp")
+                    log.warn("  ${checkZip}!${checkInnerDir}")
+                    Pair(checkInnerDir.resolve("WEB-INF/lib/"), checkInnerDir)
+                }
+            }
+            else {
+                log.error("The distribution Zip file from ${solrDistribution} does not seem to contain a solr-* root directory")
+                Pair(null, null)  // TODO: why is this not allowed:  return FAILED_DEPLOYMENT
+            }
+        } else {
+            val warUri = URI("jar:file", unixStylePathForUri.mustStartWith('/'), null)
+
+            val warJarFs = try {
+                log.warn("  ${warUri}")
+                FileSystems.newFileSystem(warUri, mapOf("create" to "false"))
+            } catch (ex: Throwable) {
+                log.error("The WAR file ${solrDistribution} cannot be opened as a Zip file, due to '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
+                return FAILED_DEPLOYMENT
+            }
+            Pair(warJarFs.getPath("/WEB-INF/lib/"), warJarFs.getPath("/"))
         }
-        val warLibPath = warJarFs.getPath("/WEB-INF/lib/")
-        val warRootPath = warJarFs.getPath("/")
 
-        if (warLibPath.notExists() || !Files.isDirectory(warLibPath)) {
-            log.error("The WAR file ${solrWar} does not contain WEB-INF/lib/ directory for the classpath jars")
+        if (warLibPath == null || warRootPath == null || warLibPath.notExists() || !Files.isDirectory(warLibPath)) {
+            log.error("The WAR file ${solrDistribution} does not contain WEB-INF/lib/ directory for the classpath jars")
             return FAILED_DEPLOYMENT
         }
 
@@ -281,14 +320,14 @@ public class Server(cfgLoader: ServerConfigLoader) {
         })
 
         if (warCopyFailed) {
-            log.error("The WAR file ${solrWar} could not be copied to temp directory")
+            log.error("The WAR file ${solrDistribution} could not be copied to temp directory")
             return FAILED_DEPLOYMENT
         }
 
-        return DeployedWarInfo(true, tempDirThisSolr, tempDirHtml, tempDirJars, URLClassLoader(jarFiles.toTypedArray(), ClassLoader.getSystemClassLoader()))
+        return DeployedDistributionInfo(true, tempDirThisSolr, tempDirHtml, tempDirJars, URLClassLoader(jarFiles.toTypedArray(), ClassLoader.getSystemClassLoader()))
     }
 
-    private fun buildSolrServletHandler(solrWarDeployment: DeployedWarInfo): ServletDeploymentAndHandler {
+    private fun buildSolrServletHandler(solrWarDeployment: DeployedDistributionInfo): ServletDeploymentAndHandler {
         // load all by name so we have no direct dependency on Solr
         val solrDispatchFilterClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.SolrDispatchFilter").asSubclass(javaClass<Filter>())
         val solrZookeeprServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.ZookeeperInfoServlet").asSubclass(javaClass<Servlet>())

@@ -258,9 +258,9 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
         existsIsWriteable(::tempDir)
         existsIsReadable(::solrWarFile)
 
-        val warFileAsString = solrWarFile.toString()
-        if (!warFileAsString.endsWith(".war") && !warFileAsString.endsWith(".zip")) {
-            err("WAR file should have a name ending in .war or maybe .zip, instead is: ${solrWarFile}")
+        val distributionFilename = solrWarFile.toString()
+        if (!distributionFilename.endsWith(".war") && !distributionFilename.endsWith(".zip")) {
+            err("Distribution file should be a WAR file or a ZIP file, instead it is: ${solrWarFile}")
         }
 
         if (hasLibExtDir()) {
