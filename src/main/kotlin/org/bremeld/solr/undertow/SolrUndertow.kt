@@ -219,11 +219,12 @@ public class Server(cfgLoader: ServerConfigLoader) {
             val rootDir = Files.newDirectoryStream(checkRootOfZip).firstOrNull()
             if (rootDir != null) {
                 val firstLevelDir = rootDir.getName(0).toString().mustNotStartWith('/').mustNotEndWith('/')
-                val checkInnerWarFilename = "/${firstLevelDir}/server/webapps/solr.war"
-                val checkInnerWar = checkZipFs.getPath(checkInnerWarFilename)
-                if (checkInnerWar.exists()) {
+                val checkInnerWar = checkZipFs.getPath("/${firstLevelDir}/server/webapps/solr.war")
+                val checkOldInnerWar =  checkZipFs.getPath("/${firstLevelDir}/example/webapps/solr.war")
+                val correctWar = if (checkInnerWar.exists()) { checkInnerWar } else { if (checkOldInnerWar.exists()) checkOldInnerWar else null  }
+                if (correctWar != null) {
                     val tempWar = tempDirThisSolr.resolve("extracted-solr.war")
-                    Files.copy(checkInnerWar, tempWar, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+                    Files.copy(correctWar, tempWar, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
                     val warUri = URI("jar:file", tempWar.toString().mustStartWith('/'), null)
 
                     val warJarFs = try {
