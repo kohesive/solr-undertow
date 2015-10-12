@@ -46,7 +46,7 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.ArrayList
+import java.util.*
 import javax.servlet.DispatcherType
 import javax.servlet.Filter
 import javax.servlet.Servlet
@@ -56,7 +56,7 @@ public data class ServerStartupStatus(val started: Boolean, val errorMessage: St
 
 public class Server(cfgLoader: ServerConfigLoader) {
     val log = LoggerFactory.getLogger("SolrServer")
-    val cfg by Delegates.lazy { ServerConfig(log, cfgLoader) }
+    val cfg by lazy { ServerConfig(log, cfgLoader) }
     var server: Undertow by Delegates.notNull()
 
     public fun run(): ServerStartupStatus {
@@ -82,7 +82,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 override fun logMessage(message: String?) {
                     cfg.accessLogger.info(message)
                 }
-            }, cfg.accessLogFormat, javaClass<Server>().getClassLoader())
+            }, cfg.accessLogFormat, Server::class.java.getClassLoader())
 
             val gracefulShutdownWrapperHandler = Handlers.gracefulShutdown(loggedHandler)
 
@@ -145,11 +145,11 @@ public class Server(cfgLoader: ServerConfigLoader) {
     private inner class ShutdownRequestHandler(val servletDeploymentMgr: DeploymentManager, val gracefulShutdownWrapperHandler: GracefulShutdownHandler) : HttpHandler {
         override fun handleRequest(exchange: HttpServerExchange) {
             if (cfg.shutdownConfig.password.isNullOrBlank()) {
-                exchange.setResponseCode(403).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
+                exchange.setStatusCode(403).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
                 exchange.getResponseSender().send("forbidden")
                 log.error("Forbidden attempt to talk to shutdown port")
             } else if (exchange.getQueryParameters().get("password")?.firstOrNull() != cfg.shutdownConfig.password) {
-                exchange.setResponseCode(401).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
+                exchange.setStatusCode(401).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
                 exchange.getResponseSender().send("unauthorized")
                 log.error("Unauthorized attempt to talk to shutdown port")
             } else {
@@ -162,7 +162,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 val wasGraceful = shutdownNicely(servletDeploymentMgr, gracefulShutdownWrapperHandler)
                 if (wasGraceful) {
                     try {
-                        exchange.setResponseCode(200).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
+                        exchange.setStatusCode(200).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
                         exchange.getResponseSender().send("OK")
                     } finally {
                         server.stop()
@@ -170,7 +170,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                     }
                 } else {
                     try {
-                        exchange.setResponseCode(500).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
+                        exchange.setStatusCode(500).getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain")
                         exchange.getResponseSender().send("ERROR")
                     } finally {
                         server.stop()
@@ -330,10 +330,10 @@ public class Server(cfgLoader: ServerConfigLoader) {
 
     private fun buildSolrServletHandler(solrWarDeployment: DeployedDistributionInfo): ServletDeploymentAndHandler {
         // load all by name so we have no direct dependency on Solr
-        val solrDispatchFilterClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.SolrDispatchFilter").asSubclass(javaClass<Filter>())
-        val solrZookeeprServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.ZookeeperInfoServlet").asSubclass(javaClass<Servlet>())
-        val solrAdminUiServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.LoadAdminUiServlet").asSubclass(javaClass<Servlet>())
-        val solrRestApiServletClass = solrWarDeployment.classLoader.loadClass("org.restlet.ext.servlet.ServerServlet").asSubclass(javaClass<Servlet>())
+        val solrDispatchFilterClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.SolrDispatchFilter").asSubclass(Filter::class.java)
+        val solrZookeeprServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.ZookeeperInfoServlet").asSubclass(Servlet::class.java)
+        val solrAdminUiServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.LoadAdminUiServlet").asSubclass(Servlet::class.java)
+        val solrRestApiServletClass = solrWarDeployment.classLoader.loadClass("org.restlet.ext.servlet.ServerServlet").asSubclass(Servlet::class.java)
         val solrRestApiClass = try {
             solrWarDeployment.classLoader.loadClass("org.apache.solr.rest.SolrSchemaRestApi")
         } catch (ex: ClassNotFoundException) {
@@ -424,6 +424,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
 // TODO:  Undertow says "This class is deprecated, the default servlet should be configured via context params." but not sure what they mean as the alternative
 //        given we are embedded, so think we are stuck with this model.
 
+@Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
 public class SolrDefaultServletConfig() : DefaultServletConfig() {
     private val defaultAllowed: Boolean = false
     private val allowed = setOf("ico", "swf", "js", "css", "png", "jpg", "gif", "html", "htm", "txt", "pdf", "svg")

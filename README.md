@@ -7,7 +7,7 @@ solr-undertow
 
 This application launches a Solr distribution as a standalone server running a high performance HTTP front-end based on [undertow.io](http://undertow.io) (the engine behind WildFly, the new JBoss).  It has no features of an application server, does nothing more than load Solr servlets and also service the Admin UI.  It is production-quality for a stand-alone Solr server.
 
-**NOTE:** Solr 5.3 WAR-less distribution are now supported.  Use the full `solr-5.3.0.zip` distribution in place of the WAR.  Also works for older versions (tested 5.2.1) that contain the WAR inside the distribution, use the full distribution .zip file, NOT the .tgz.  Solr 5.x is hiding the WAR to provide a more simplified Solr server experience, but they have so far kept Jetty under the covers with the harder-to-tune 10,000 default threads.  This doesn't change the need for Solr-Undertow.
+**NOTE:** Solr 5.3 WAR-less distribution are now supported.  Use the full `solr-5.3.1.zip` distribution in place of the WAR.  Also works for older versions (tested 5.2.1) that contain the WAR inside the distribution, use the full distribution .zip file, NOT the .tgz.  Solr 5.x is hiding the WAR to provide a more simplified Solr server experience, but they have so far kept Jetty under the covers with the harder-to-tune 10,000 default threads.  This doesn't change the need for Solr-Undertow.
 
 Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub supporting versions of Solr 4.x and 5.x.  Releases before 4.4.0 are untested, but should work.
 
@@ -40,7 +40,7 @@ solr.undertow: {
   solrHome: "./solr-home"
   solrLogs: "./solr-logs"
   tempDir: "./solr-temp"
-  solrVersion: "5.3.0"
+  solrVersion: "5.3.1"
   solrWarFile: ./solr-wars/solr-${solr.undertow.solrVersion}.zip
 }
 ```
@@ -99,7 +99,7 @@ Other Notes
 
 #### Solr Distributions (prefered for Solr 5.x and newer)
 
-For Solr 5.3 and newer, you only have the option to use the full Solr distribution ZIP file. Download the version you desire from the main [Solr website](http://lucene.apache.org/solr/) or [past version archives](http://archive.apache.org/dist/lucene/solr/).  We have tested versions 5.2.1 (with embedded WAR) and 5.3.0 (no WAR no more) and any that have the same directory structure will work.
+For Solr 5.3 and newer, you only have the option to use the full Solr distribution ZIP file. Download the version you desire from the main [Solr website](http://lucene.apache.org/solr/) or [past version archives](http://archive.apache.org/dist/lucene/solr/).  We have tested versions 5.2.1 (with embedded WAR) and 5.3.x (no WAR no more) and any that have the same directory structure will work.
 
 #### Solr WAR Files (only 5.2.1 or earlier)
 

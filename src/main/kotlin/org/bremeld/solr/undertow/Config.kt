@@ -16,68 +16,65 @@
 package org.bremeld.solr.undertow
 
 import com.typesafe.config.Config
-import kotlin.reflect.KMemberProperty
 import org.slf4j.Logger
-import java.nio.file.Files
-import java.util.HashMap
-import java.util.Properties
-import java.nio.file.Path
 import org.slf4j.LoggerFactory
 import uy.klutter.config.typesafe.*
-import uy.klutter.config.typesafe.ReferenceConfig
-import uy.klutter.config.typesafe.jdk7.*
 import uy.klutter.config.typesafe.jdk7.FileConfig
-import uy.klutter.config.typesafe.loadConfig
+import uy.klutter.config.typesafe.jdk7.asPathSibling
 import uy.klutter.core.common.initializedBy
 import uy.klutter.core.jdk.minimum
 import uy.klutter.core.jdk7.notExists
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KProperty1
 
-internal val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
+public val SOLR_UNDERTOW_CONFIG_PREFIX = "solr.undertow"
 
-internal val SYS_PROP_JETTY_PORT = "jetty.port"
-internal val OUR_PROP_HTTP_PORT = "httpClusterPort"
+public val SYS_PROP_JETTY_PORT = "jetty.port"
+public val OUR_PROP_HTTP_PORT = "httpClusterPort"
 
-internal val SYS_PROP_ZKRUN = "zkRun"
-internal val OUR_PROP_ZKRUN = "zkRun"
+public val SYS_PROP_ZKRUN = "zkRun"
+public val OUR_PROP_ZKRUN = "zkRun"
 
-internal val SYS_PROP_ZKHOST = "zkHost"
-internal val OUR_PROP_ZKHOST = "zkHost"
+public val SYS_PROP_ZKHOST = "zkHost"
+public val OUR_PROP_ZKHOST = "zkHost"
 
-internal val SYS_PROP_SOLR_LOG = "solr.log"
-internal val OUR_PROP_SOLR_LOG = "solrLogs"
+public val SYS_PROP_SOLR_LOG = "solr.log"
+public val OUR_PROP_SOLR_LOG = "solrLogs"
 
-internal val SYS_PROP_HOST_CONTEXT = "hostContext"
-internal val OUR_PROP_HOST_CONTEXT = "solrContextPath"
+public val SYS_PROP_HOST_CONTEXT = "hostContext"
+public val OUR_PROP_HOST_CONTEXT = "solrContextPath"
 
-internal val OUR_PROP_HTTP_HOST = "httpHost"
+public val OUR_PROP_HTTP_HOST = "httpHost"
 
-internal val SYS_PROP_SOLR_HOME = "solr.solr.home"
-internal val OUR_PROP_SOLR_HOME = "solrHome"
+public val SYS_PROP_SOLR_HOME = "solr.solr.home"
+public val OUR_PROP_SOLR_HOME = "solrHome"
 
-internal val SYS_PROP_JBOSS_LOGGING = "org.jboss.logging.provider"
+public val SYS_PROP_JBOSS_LOGGING = "org.jboss.logging.provider"
 
-internal val OUR_PROP_HTTP_IO_THREADS = "httpIoThreads"
-internal val OUR_PROP_HTTP_WORKER_THREADS = "httpWorkerThreads"
-internal val OUR_PROP_SOLR_WAR = "solrWarFile"
-internal val OUR_PROP_SOLR_VERSION = "solrVersion"
-internal val OUR_PROP_TEMP_DIR = "tempDir"
-internal val OUR_PROP_LIBEXT_DIR = "libExtDir"
+public val OUR_PROP_HTTP_IO_THREADS = "httpIoThreads"
+public val OUR_PROP_HTTP_WORKER_THREADS = "httpWorkerThreads"
+public val OUR_PROP_SOLR_WAR = "solrWarFile"
+public val OUR_PROP_SOLR_VERSION = "solrVersion"
+public val OUR_PROP_TEMP_DIR = "tempDir"
+public val OUR_PROP_LIBEXT_DIR = "libExtDir"
 
 
 
 // system and environment variables that need to be treated the same as our configuration items
-internal val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
+public val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_ZKRUN to OUR_PROP_ZKRUN,
         SYS_PROP_ZKHOST to OUR_PROP_ZKHOST,
         SYS_PROP_SOLR_LOG to OUR_PROP_SOLR_LOG,
         SYS_PROP_HOST_CONTEXT to OUR_PROP_HOST_CONTEXT,
         SYS_PROP_SOLR_HOME to OUR_PROP_SOLR_HOME)
-internal val SYS_PROPERTIES_THAT_ARE_PATHS = setOf(SYS_PROP_SOLR_LOG, SYS_PROP_SOLR_HOME)
+public val SYS_PROPERTIES_THAT_ARE_PATHS = setOf(SYS_PROP_SOLR_LOG, SYS_PROP_SOLR_HOME)
 
 // These allow substitution of Env variables for unit tests.
-internal var SERVER_ENV_WRAPPER: Map<out Any, Any> = System.getenv()
-internal var SERVER_SYS_WRAPPER: MutableMap<Any, Any> = System.getProperties()
+public var SERVER_ENV_WRAPPER: Map<out Any, Any> = System.getenv()
+public var SERVER_SYS_WRAPPER: MutableMap<Any, Any> = System.getProperties()
 
 public class ServerConfigLoader(val configFile: Path) {
     // our config chain wants Env variables to override Reference Config because that is how Solr would work,
@@ -181,12 +178,12 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     fun hasLibExtDir(): Boolean = configured.value(OUR_PROP_LIBEXT_DIR).isNotEmptyString()
 
 
-    private fun printF(p: KMemberProperty<ServerConfig, Path>) = log.info("  ${p.name}: ${p.get(this)}")
-    private fun printS(p: KMemberProperty<ServerConfig, String>) = log.info("  ${p.name}: ${p.get(this)}")
-    private fun printSA(p: KMemberProperty<ServerConfig, Array<String>>) = log.info("  ${p.name}: ${p.get(this).joinToString(",")}")
-    private fun printB(p: KMemberProperty<ServerConfig, Boolean>) = log.info("  ${p.name}: ${p.get(this)}")
-    private fun printI(p: KMemberProperty<ServerConfig, Int>) = log.info("  ${p.name}: ${p.get(this)}")
-    private fun printI(p: KMemberProperty<ServerConfig, Int>, defaultVal: Int) = log.info("  ${p.name}: ${p.get(this)} ${if (p.get(this) == defaultVal) "(no setting, using default)" else ""}")
+    private fun printF(p: KProperty1<ServerConfig, Path>) = log.info("  ${p.name}: ${p.get(this)}")
+    private fun printS(p: KProperty1<ServerConfig, String>) = log.info("  ${p.name}: ${p.get(this)}")
+    private fun printSA(p: KProperty1<ServerConfig, Array<String>>) = log.info("  ${p.name}: ${p.get(this).joinToString(",")}")
+    private fun printB(p: KProperty1<ServerConfig, Boolean>) = log.info("  ${p.name}: ${p.get(this)}")
+    private fun printI(p: KProperty1<ServerConfig, Int>) = log.info("  ${p.name}: ${p.get(this)}")
+    private fun printI(p: KProperty1<ServerConfig, Int>, defaultVal: Int) = log.info("  ${p.name}: ${p.get(this)} ${if (p.get(this) == defaultVal) "(no setting, using default)" else ""}")
 
     fun print() {
         log.info("=== [ Config File settings from: ${loader.configFile} ] ===")
@@ -229,7 +226,7 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
             isValid = false
         }
 
-        fun existsIsWriteable(p: KMemberProperty<ServerConfig, Path>) {
+        fun existsIsWriteable(p: KProperty1<ServerConfig, Path>) {
             val dir = p.get(this)
             if (dir.notExists()) {
                 err("${p.name} dir does not exist: ${dir}")
@@ -239,7 +236,7 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
             }
         }
 
-        fun existsIsReadable(p: KMemberProperty<ServerConfig, Path>) {
+        fun existsIsReadable(p: KProperty1<ServerConfig, Path>) {
             val dir = p.get(this)
             if (dir.notExists()) {
                 err("${p.name} does not exist: ${dir}")

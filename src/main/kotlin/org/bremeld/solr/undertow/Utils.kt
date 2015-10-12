@@ -17,14 +17,14 @@ package org.bremeld.solr.undertow
 
 import org.slf4j.Logger
 
-private fun printErrorAndExit(msg: String?, errCode: Int = -1) {
+internal fun printErrorAndExit(msg: String?, errCode: Int = -1) {
     System.err.println(msg ?: "Unknown Error")
     System.exit(errCode)
 }
 
-private fun <T> T.then(initWith: (T) -> Unit): T {
+internal fun <T> T.then(initWith: (T) -> Unit): T {
     initWith(this)
     return this
 }
 
-private inline fun Logger.debug(foo: () -> String): Unit = if (this.isDebugEnabled()) this.debug(foo())
+internal inline fun Logger.debug(foo: () -> String): Unit = if (this.isDebugEnabled()) this.debug(foo())
