@@ -331,7 +331,12 @@ public class Server(cfgLoader: ServerConfigLoader) {
     private fun buildSolrServletHandler(solrWarDeployment: DeployedDistributionInfo): ServletDeploymentAndHandler {
         // load all by name so we have no direct dependency on Solr
         val solrDispatchFilterClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.SolrDispatchFilter").asSubclass(Filter::class.java)
-        val solrZookeeprServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.ZookeeperInfoServlet").asSubclass(Servlet::class.java)
+        val solrZookeeprServletClass = try {
+            solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.ZookeeperInfoServlet").asSubclass(Servlet::class.java)
+        } catch (ex: ClassNotFoundException) {
+            null
+        }
+
         val solrAdminUiServletClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.LoadAdminUiServlet").asSubclass(Servlet::class.java)
         val solrRestApiServletClass = solrWarDeployment.classLoader.loadClass("org.restlet.ext.servlet.ServerServlet").asSubclass(Servlet::class.java)
         val solrRestApiClass = try {
@@ -360,8 +365,6 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 )
                 .addFilterUrlMapping("SolrRequestFilter", "/*", DispatcherType.REQUEST)
                 .addServlets(
-                        Servlets.servlet("Zookeeper", solrZookeeprServletClass)
-                                .addMapping("/zookeeper"),
                         Servlets.servlet("LoadAdminUI", solrAdminUiServletClass)
                                 .addMapping("/admin.html"),
                         Servlets.servlet("SolrRestApi", solrRestApiServletClass)
@@ -376,6 +379,11 @@ public class Server(cfgLoader: ServerConfigLoader) {
             deployment.addServlet(Servlets.servlet("SolrConfigRestApi", solrRestApiServletClass)
                     .addInitParam("org.restlet.application", solrRestConfigApiClass.getName())
                     .addMapping("/config/*"))
+        }
+
+        if (solrZookeeprServletClass != null) {
+            deployment.addServlet(Servlets.servlet("Zookeeper", solrZookeeprServletClass)
+                    .addMapping("/zookeeper"))
         }
 
         log.warn("Initializing Solr, deploying the Servlet Container...")
