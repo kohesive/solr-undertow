@@ -22,9 +22,11 @@ internal fun printErrorAndExit(msg: String?, errCode: Int = -1) {
     System.exit(errCode)
 }
 
-internal fun <T> T.then(initWith: (T) -> Unit): T {
+internal infix fun <T> T.then(initWith: (T) -> Unit): T {
     initWith(this)
     return this
 }
 
-internal inline fun Logger.debug(foo: () -> String): Unit = if (this.isDebugEnabled()) this.debug(foo())
+internal inline fun Logger.debug(foo: () -> String): Unit {
+    if (this.isDebugEnabled()) this.debug(foo())
+}
