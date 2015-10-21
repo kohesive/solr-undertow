@@ -134,8 +134,8 @@ public class Server(cfgLoader: ServerConfigLoader) {
 
             return ServerStartupStatus(true, "OK")
         } catch (ex: Throwable) {
-            log.error("Server unhandled exception during startup '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
-            return ServerStartupStatus(false, "Server unhandled exception during startup '${ex.getMessage()}'")
+            log.error("Server unhandled exception during startup '${ex.message ?: ex.javaClass.getName()}'", ex)
+            return ServerStartupStatus(false, "Server unhandled exception during startup '${ex.message}'")
         }
     }
 
@@ -231,7 +231,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                         log.warn("  ${warUri}")
                         FileSystems.newFileSystem(warUri, mapOf("create" to "false"))
                     } catch (ex: Throwable) {
-                        log.error("The extracted distribution WAR file from ${solrDistribution} cannot be opened as a Zip file, due to '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
+                        log.error("The extracted distribution WAR file from ${solrDistribution} cannot be opened as a Zip file, due to '${ex.message ?: ex.javaClass.getName()}'", ex)
                         return FAILED_DEPLOYMENT
                     }
                     Pair(warJarFs.getPath("/WEB-INF/lib/"), warJarFs.getPath("/"))
@@ -252,7 +252,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
                 log.warn("  ${warUri}")
                 FileSystems.newFileSystem(warUri, mapOf("create" to "false"))
             } catch (ex: Throwable) {
-                log.error("The WAR file ${solrDistribution} cannot be opened as a Zip file, due to '${ex.getMessage() ?: ex.javaClass.getName()}'", ex)
+                log.error("The WAR file ${solrDistribution} cannot be opened as a Zip file, due to '${ex.message ?: ex.javaClass.getName()}'", ex)
                 return FAILED_DEPLOYMENT
             }
             Pair(warJarFs.getPath("/WEB-INF/lib/"), warJarFs.getPath("/"))
@@ -314,7 +314,7 @@ public class Server(cfgLoader: ServerConfigLoader) {
             }
 
             override fun visitFileFailed(file: Path?, ex: IOException?): FileVisitResult {
-                log.error("Unable to copy from WAR to temp directory, file ${file?.toAbsolutePath().toString()}, due to '${ex?.getMessage() ?: ex?.javaClass?.getName() ?: "unknown"}'", ex)
+                log.error("Unable to copy from WAR to temp directory, file ${file?.toAbsolutePath().toString()}, due to '${ex?.message ?: ex?.javaClass?.getName() ?: "unknown"}'", ex)
                 warCopyFailed = true
                 return FileVisitResult.TERMINATE
             }
@@ -388,10 +388,10 @@ public class Server(cfgLoader: ServerConfigLoader) {
         // and exact matches on outside so they are checked first.
 
         var wrappedHandlers = deploymentHandler
-        cfg.requestLimiters.values() map { RequestLimitHelper(it) } forEach { rl ->
+        cfg.requestLimiters.values.map { RequestLimitHelper(it) }.forEach { rl ->
             wrappedHandlers = rl.nestHandlerInsideRateLimitingBySuffixHandler(wrappedHandlers, deploymentHandler)
         }
-        cfg.requestLimiters.values() map { RequestLimitHelper(it) } forEach { rl ->
+        cfg.requestLimiters.values.map { RequestLimitHelper(it) }.forEach { rl ->
             wrappedHandlers = rl.nestHandlerInsideRateLimitingByExactHandler(wrappedHandlers, deploymentHandler)
         }
 

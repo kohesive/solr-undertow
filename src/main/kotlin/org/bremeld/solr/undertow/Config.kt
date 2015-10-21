@@ -97,20 +97,20 @@ public class ServerConfigLoader(val configFile: Path) {
         // copy values from typical Solr system or environment properties into our equivalent configuration item
 
         val p = Properties()
-        for (mapping in SOLR_OVERRIDES.entrySet()) {
+        for (mapping in SOLR_OVERRIDES.entries) {
             val (solrPropName, ourPropName) = mapping
             val ourPropFQName = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${ourPropName}"
 
             val envPropValue: Any? = if (solrPropName == SYS_PROP_ZKRUN) {
-                val temp = props.get(solrPropName)
+                val temp = props.getRaw(solrPropName)
                 if (temp != null) "true" else null
             }
             else {
-                props.get(solrPropName)
+                props.getRaw(solrPropName)
             }
 
             // don't override our own config item set as  property
-            val value = props.get(ourPropFQName) ?: envPropValue
+            val value = props.getRaw(ourPropFQName) ?: envPropValue
             if (value != null) {
                 p.put(ourPropFQName, value)
             }
@@ -121,7 +121,7 @@ public class ServerConfigLoader(val configFile: Path) {
 
     private fun writeRelevantSystemProperties(fromConfig: Config) {
         // copy our configuration items into Solr system properties that might be looked for later by Solr
-        for (mapping in SOLR_OVERRIDES.entrySet()) {
+        for (mapping in SOLR_OVERRIDES.entries) {
             val cfgKey = "${SOLR_UNDERTOW_CONFIG_PREFIX}.${mapping.value}"
             val configValue = fromConfig.value(cfgKey)
             if (configValue.exists()) {
@@ -167,7 +167,7 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
     val solrVersion = configured.value(OUR_PROP_SOLR_VERSION).asString()
     val solrWarFile = configured.value(OUR_PROP_SOLR_WAR).asPathSibling(loader.configFile)
     val libExtDir = configured.value(OUR_PROP_LIBEXT_DIR).asPathSibling(loader.configFile)
-    val solrContextPath = configured.value(OUR_PROP_HOST_CONTEXT).asString() let { solrContextPath ->
+    val solrContextPath = configured.value(OUR_PROP_HOST_CONTEXT).asString().let { solrContextPath ->
         if (!solrContextPath.startsWith("/")) "/" + solrContextPath else solrContextPath
     }
 
@@ -187,27 +187,27 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
 
     fun print() {
         log.info("=== [ Config File settings from: ${loader.configFile} ] ===")
-        printB(::zkRun)
-        printS(::zkHost)
-        printI(::httpClusterPort)
-        printS(::httpHost)
-        printI(::httpIoThreads, 0)
-        printI(::httpWorkerThreads, 0)
+        printB(ServerConfig::zkRun)
+        printS(ServerConfig::zkHost)
+        printI(ServerConfig::httpClusterPort)
+        printS(ServerConfig::httpHost)
+        printI(ServerConfig::httpIoThreads, 0)
+        printI(ServerConfig::httpWorkerThreads, 0)
 
-        printSA(::activeRequestLimits)
+        printSA(ServerConfig::activeRequestLimits)
 
-        requestLimiters.values().forEach { rl ->
+        requestLimiters.values.forEach { rl ->
             rl.print()
         }
 
-        printF(::solrHome)
-        printF(::solrLogs)
-        printF(::tempDir)
-        printS(::solrVersion)
-        printF(::solrWarFile)
-        printS(::solrContextPath)
+        printF(ServerConfig::solrHome)
+        printF(ServerConfig::solrLogs)
+        printF(ServerConfig::tempDir)
+        printS(ServerConfig::solrVersion)
+        printF(ServerConfig::solrWarFile)
+        printS(ServerConfig::solrContextPath)
         if (hasLibExtDir()) {
-            printF(::libExtDir)
+            printF(ServerConfig::libExtDir)
         }
 
         log.debug { "<<<< CONFIGURATION FILE TRACE >>>>" }
@@ -246,14 +246,14 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
             }
         }
 
-        requestLimiters.values().forEach { rl ->
+        requestLimiters.values.forEach { rl ->
             rl.validate()
         }
 
-        existsIsWriteable(::solrHome)
-        existsIsWriteable(::solrLogs)
-        existsIsWriteable(::tempDir)
-        existsIsReadable(::solrWarFile)
+        existsIsWriteable(ServerConfig::solrHome)
+        existsIsWriteable(ServerConfig::solrLogs)
+        existsIsWriteable(ServerConfig::tempDir)
+        existsIsReadable(ServerConfig::solrWarFile)
 
         val distributionFilename = solrWarFile.toString()
         if (!distributionFilename.endsWith(".war") && !distributionFilename.endsWith(".zip")) {
@@ -261,7 +261,7 @@ public class ServerConfig(private val log: Logger, val loader: ServerConfigLoade
         }
 
         if (hasLibExtDir()) {
-            existsIsReadable(::libExtDir)
+            existsIsReadable(ServerConfig::libExtDir)
         }
 
         return isValid
