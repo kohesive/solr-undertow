@@ -1,15 +1,15 @@
 solr-undertow
 =============
 
-[![Join the chat at https://gitter.im/bremeld/solr-undertow](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/bremeld/solr-undertow?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![CircleCI branch](https://img.shields.io/circleci/project/bremeld/solr-undertow/master.svg)](https://circleci.com/gh/bremeld/solr-undertow/tree/master) [![Issues](https://img.shields.io/github/issues/bremeld/solr-undertow.svg)](https://github.com/bremeld/solr-undertow/issues?q=is%3Aopen) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/bremeld/solr-undertow/blob/master/LICENSE.txt) [![Kotlin](https://img.shields.io/badge/kotlin-1.0.0--beta--1038-blue.svg)](http://kotlinlang.org)
+[![CircleCI branch](https://img.shields.io/circleci/project/kohesive/solr-undertow/master.svg)](https://circleci.com/gh/kohesive/solr-undertow/tree/master) [![Issues](https://img.shields.io/github/issues/kohesive/solr-undertow.svg)](https://github.com/kohesive/solr-undertow/issues?q=is%3Aopen) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/kohesive/solr-undertow/blob/master/LICENSE.txt) [![Kotlin](https://img.shields.io/badge/kotlin-1.0.0--rc--1017-blue.svg)](http://kotlinlang.org)
 
 [Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.x or 5.x.  Less than 7MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
 
 This application launches a Solr distribution as a standalone server running a high performance HTTP front-end based on [undertow.io](http://undertow.io) (the engine behind WildFly, the new JBoss).  It has no features of an application server, does nothing more than load Solr servlets and also service the Admin UI.  It is production-quality for a stand-alone Solr server.
 
-**NOTE:** Solr 5.3 WAR-less distribution are now supported.  Use the full `solr-5.3.1.zip` distribution in place of the WAR.  Also works for older versions (tested 5.2.1) that contain the WAR inside the distribution, use the full distribution .zip file, NOT the .tgz.  Solr 5.x is hiding the WAR to provide a more simplified Solr server experience, but they have so far kept Jetty under the covers with the harder-to-tune 10,000 default threads.  This doesn't change the need for Solr-Undertow.
+**NOTE:** Solr WAR-less distribution are now supported.  Use the full `solr-x.y.z.zip` distribution in place of the WAR.  Also works for older versions (tested 5.2.1) that contain the WAR inside the distribution, use the full distribution .zip file, NOT the .tgz.  Solr is now hiding the WAR to provide a more simplified Solr server experience, but this doesn't change the need for Solr-Undertow (Jetty + Solr is still hard to tune, embedded or not).
 
-Releases [are available here](https://github.com/bremeld/solr-undertow/releases) on GitHub supporting versions of Solr 4.x and 5.x.  Releases before 4.4.0 are untested, but should work.
+Releases [are available here](https://github.com/kohesive/solr-undertow/releases) on GitHub supporting versions of Solr 4.x and 5.x.  Releases before 4.4.0 are untested, but should work.
 
 **NOTE:** Be sure to read the [Tuning Solr-Undertow](./TUNING.MD) guide.
 
@@ -40,7 +40,7 @@ solr.undertow: {
   solrHome: "./solr-home"
   solrLogs: "./solr-logs"
   tempDir: "./solr-temp"
-  solrVersion: "5.3.1"
+  solrVersion: "5.4.1"
   solrWarFile: ./solr-wars/solr-${solr.undertow.solrVersion}.zip
 }
 ```
@@ -99,13 +99,13 @@ Other Notes
 
 #### Solr Distributions (prefered for Solr 5.x and newer)
 
-For Solr 5.3 and newer, you only have the option to use the full Solr distribution ZIP file. Download the version you desire from the main [Solr website](http://lucene.apache.org/solr/) or [past version archives](http://archive.apache.org/dist/lucene/solr/).  We have tested versions 5.2.1 (with embedded WAR) and 5.3.x (no WAR no more) and any that have the same directory structure will work.
+For Solr 5.3 and newer, you only have the option to use the full Solr distribution ZIP file. Download the version you desire from the main [Solr website](http://lucene.apache.org/solr/) or [past version archives](http://archive.apache.org/dist/lucene/solr/).  We have tested versions 5.2.1 (with embedded WAR) and 5.3.x, 5.4.x, 6.0.0 (nightly builds) and any that have the same directory structure will work.
 
 #### Solr WAR Files (only 5.2.1 or earlier)
 
 **For Solr 4.x you can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.4 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.4/solr-4.10.4.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
 
-**For Solr 5.0 until 5.2.1& you should try the full ZIP distribution** as mentioned above, or you can find a `solr.war` inside the solr distrubtion within the `server/webapps/solr.war` directory.  The WAR file should be renamed to have the version number included, for example `solr-5.2.1.war` and that needs to match the solr-undertow configuration files.
+**For Solr 5.0 until 5.2.1 you should try the full ZIP distribution** as mentioned above, or you can find a `solr.war` inside the solr distrubtion within the `server/webapps/solr.war` directory.  The WAR file should be renamed to have the version number included, for example `solr-5.2.1.war` and that needs to match the solr-undertow configuration files.
 
 #### Custom JVM Parameters
 
