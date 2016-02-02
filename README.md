@@ -7,9 +7,7 @@ solr-undertow
 
 This application launches a Solr distribution as a standalone server running a high performance HTTP front-end based on [undertow.io](http://undertow.io) (the engine behind WildFly, the new JBoss).  It has no features of an application server, does nothing more than load Solr servlets and also service the Admin UI.  It is production-quality for a stand-alone Solr server.
 
-**NOTE:** Solr WAR-less distribution are now supported.  Use the full `solr-x.y.z.zip` distribution in place of the WAR.  Also works for older versions (tested 5.2.1) that contain the WAR inside the distribution, use the full distribution .zip file, NOT the .tgz.  Solr is now hiding the WAR to provide a more simplified Solr server experience, but this doesn't change the need for Solr-Undertow (Jetty + Solr is still hard to tune, embedded or not).
-
-Releases [are available here](https://github.com/kohesive/solr-undertow/releases) on GitHub supporting versions of Solr 4.x and 5.x.  Releases before 4.4.0 are untested, but should work.
+Releases [are available on GitHub](https://github.com/kohesive/solr-undertow/releases).
 
 **NOTE:** Be sure to read the [Tuning Solr-Undertow](./TUNING.MD) guide.
 
@@ -97,15 +95,23 @@ Other Notes
 
 **Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Oracle JDK is also prefered, Open JDK does not perform as well and at times has been incompatible.  
 
-#### Solr Distributions (prefered for Solr 5.x and newer)
+#### Solr Distributions
 
-For Solr 5.3 and newer, you only have the option to use the full Solr distribution ZIP file. Download the version you desire from the main [Solr website](http://lucene.apache.org/solr/) or [past version archives](http://archive.apache.org/dist/lucene/solr/).  We have tested versions 5.2.1 (with embedded WAR) and 5.3.x, 5.4.x, 6.0.0 (nightly builds) and any that have the same directory structure will work.
+Solr-Undertow uses one of the following as a supported Solr distrubtion:
 
-#### Solr WAR Files (only 5.2.1 or earlier)
+* A `WAR` file from 5.2.1 or earlier 
+* A `Zip` full Solr distribution pre 5.2.1 that contains a `WAR` file in `server/webapps/solr.war` or `example/webapps/solr.war` 
+* A `Zip` full Solr distribution post 5.2.1 that conatins `server/solr-webapp/webapp` which is really an extracted `WAR` file
+* A `WAR` file you create by rezipping the contents of a distribution `server/solr-webapp/webapp` directory and naming it with `.war` extension.
+
+The smallest distribution is the WAR file, which you can create, or you can remove everything else from a distribution `Zip` file keeping only the contents of the `server/solr-webapp/webapp` directory (including the path names).
 
 **For Solr 4.x you can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.4 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.4/solr-4.10.4.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
 
-**For Solr 5.0 until 5.2.1 you should try the full ZIP distribution** as mentioned above, or you can find a `solr.war` inside the solr distrubtion within the `server/webapps/solr.war` directory.  The WAR file should be renamed to have the version number included, for example `solr-5.2.1.war` and that needs to match the solr-undertow configuration files.
+**For Solr 5.x you download full distributions** from the main [Solr website](http://lucene.apache.org/solr/) or from the [past version archives](http://archive.apache.org/dist/lucene/solr/).   Some earlier 5.x versions have WAR files available as well.
+
+**For Solr 6.x you download a nightly build** from [Solr Build System](https://builds.apache.org/job/Solr-Artifacts-trunk/lastSuccessfulBuild/artifact/solr/package/)
+
 
 #### Custom JVM Parameters
 
