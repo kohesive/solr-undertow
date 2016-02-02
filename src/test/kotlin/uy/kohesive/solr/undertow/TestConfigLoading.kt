@@ -67,17 +67,17 @@ class TestConfigLoading {
 
     @Test fun testNoZkRunOrZkHostEnvSysProp() {
         // if system prop zkRun or zkHost is not set, we should be empty in our configuration, and the system properties should be blank after
-        assertNull(SERVER_SYS_WRAPPER.getRaw(SYS_PROP_ZKRUN))
-        assertNull(SERVER_SYS_WRAPPER.getRaw(SYS_PROP_ZKHOST))
-        assertNull(SERVER_ENV_WRAPPER.getRaw(SYS_PROP_ZKRUN))
-        assertNull(SERVER_ENV_WRAPPER.getRaw(SYS_PROP_ZKHOST))
+        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKRUN))
+        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
+        assertNull(SERVER_ENV_WRAPPER.get(SYS_PROP_ZKRUN))
+        assertNull(SERVER_ENV_WRAPPER.get(SYS_PROP_ZKHOST))
         val cfg = makeEmptyConfig()
         assertFalse(cfg.zkRun)
         assertTrue(cfg.zkHost.trim().isEmpty())
-        assertNull(SERVER_SYS_WRAPPER.getRaw(SYS_PROP_ZKRUN))
-        assertNull(SERVER_SYS_WRAPPER.getRaw(SYS_PROP_ZKHOST))
-        assertNull(SERVER_ENV_WRAPPER.getRaw(SYS_PROP_ZKRUN))
-        assertNull(SERVER_ENV_WRAPPER.getRaw(SYS_PROP_ZKHOST))
+        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKRUN))
+        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
+        assertNull(SERVER_ENV_WRAPPER.get(SYS_PROP_ZKRUN))
+        assertNull(SERVER_ENV_WRAPPER.get(SYS_PROP_ZKHOST))
     }
 
 

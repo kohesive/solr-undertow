@@ -15,6 +15,7 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${version_kotlin}"
+        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.4'
     }
 }
