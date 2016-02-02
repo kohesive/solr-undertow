@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory
 import uy.klutter.config.typesafe.*
 import uy.klutter.config.typesafe.jdk7.FileConfig
 import uy.klutter.config.typesafe.jdk7.asPathRelative
-import uy.klutter.config.typesafe.jdk7.asPathSibling
 import uy.klutter.core.common.initializedBy
 import uy.klutter.core.jdk.minimum
 import uy.klutter.core.jdk.nullIfEmpty
@@ -74,9 +73,23 @@ val SOLR_OVERRIDES = mapOf(SYS_PROP_JETTY_PORT to OUR_PROP_HTTP_PORT,
         SYS_PROP_SOLR_HOME to OUR_PROP_SOLR_HOME)
 val SYS_PROPERTIES_THAT_ARE_PATHS = setOf(SYS_PROP_SOLR_LOG, SYS_PROP_SOLR_HOME)
 
-// These allow substitution of Env variables for unit tests.
-@Transient var SERVER_ENV_WRAPPER: Map<out Any, Any> = System.getenv()
-@Transient var SERVER_SYS_WRAPPER: MutableMap<Any, Any> = System.getProperties()
+// Allow substitution of Env variables for unit tests.
+@Volatile var SERVER_ENV_PROXY: EnvProxy = RealEnvProxy()
+fun resetEnvProxy() { SERVER_ENV_PROXY = RealEnvProxy() }
+
+interface EnvProxy {
+    fun readEnvProperty(key: String): Any? = System.getenv(key)
+    fun readSysProperty(key: String): Any? = System.getProperty(key)
+    fun writeSysProperty(key: String, value: String): Unit {
+        System.setProperty(key, value)
+    }
+    fun clearSysProperty(key: String): Unit { System.clearProperty(key) }
+
+    fun envPropertiesAsMap(): Map<out Any, Any> = System.getenv()
+    fun sysPropertiesAsMap(): Map<out Any, Any> = System.getProperties()
+}
+
+class RealEnvProxy: EnvProxy {}
 
 interface ServerConfigLoader {
     val workingDir: Path
@@ -84,7 +97,7 @@ interface ServerConfigLoader {
 }
 
 fun routeJbossLoggingToSlf4j() {
-    SERVER_SYS_WRAPPER.put(SYS_PROP_JBOSS_LOGGING, "slf4j")
+    SERVER_ENV_PROXY.writeSysProperty(SYS_PROP_JBOSS_LOGGING, "slf4j")
 }
 
 abstract class ServerConfigReplicatedToSysProps: ServerConfigLoader {
@@ -95,15 +108,19 @@ abstract class ServerConfigReplicatedToSysProps: ServerConfigLoader {
             val configValue = fromConfig.value(cfgKey)
             if (configValue.exists()) {
                 if (configValue.isNotEmptyString()) {
-                    val value = if (SYS_PROPERTIES_THAT_ARE_PATHS.contains(mapping.key)) configValue.asPathRelative(workingDir).toString()
-                    else configValue.asString()
-                    SERVER_SYS_WRAPPER.put(mapping.key, value)
+                    val value = if (SYS_PROPERTIES_THAT_ARE_PATHS.contains(mapping.key)) {
+                        configValue.asPathRelative(workingDir).toString()
+                    }
+                    else {
+                        configValue.asString()
+                    }
+                    SERVER_ENV_PROXY.writeSysProperty(mapping.key, value)
                 }
             }
         }
         val zkRunCfgkey = fromConfig.value("${SOLR_UNDERTOW_CONFIG_PREFIX}.${OUR_PROP_ZKRUN}")
         if (zkRunCfgkey.notExists() || !zkRunCfgkey.asBoolean()) {
-            SERVER_SYS_WRAPPER.remove(SYS_PROP_ZKRUN)
+            SERVER_ENV_PROXY.clearSysProperty(SYS_PROP_ZKRUN)
         }
     }
 }
@@ -122,9 +139,9 @@ class ServerConfigLoaderFromFileAndSolrEnvironment(private val configFile: Path)
     //
     // No configuration variables are resolved until the end, so a variable can be used in a lower level, and fulfilled
     // by a higher.
-    override val resolvedConfig = loadConfig(PropertiesAsConfig(readRelevantProperties(SERVER_SYS_WRAPPER)),
+    override val resolvedConfig = loadConfig(PropertiesAsConfig(readRelevantProperties(SERVER_ENV_PROXY.sysPropertiesAsMap())),
                                     FileConfig(configFile),
-                                    PropertiesAsConfig(readRelevantProperties(SERVER_ENV_WRAPPER)),
+                                    PropertiesAsConfig(readRelevantProperties(SERVER_ENV_PROXY.envPropertiesAsMap())),
                                     ReferenceConfig()) then { config ->
         writeRelevantSystemProperties(config)
         routeJbossLoggingToSlf4j()

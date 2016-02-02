@@ -15,18 +15,16 @@
 
 package uy.kohesive.solr.undertow.tests
 
-import java.nio.file.Files
-import kotlin.test.assertFalse
-import org.slf4j.LoggerFactory
-import kotlin.test.assertTrue
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertEquals
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.slf4j.LoggerFactory
 import uy.kohesive.solr.undertow.*
-import java.nio.file.Paths
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.*
+import kotlin.test.*
 
 class TestConfigLoading {
     val log = LoggerFactory.getLogger("ConfigTests")
@@ -46,54 +44,90 @@ class TestConfigLoading {
     }
 
     @Before fun clearSystemProperties() {
-        // make sure no system properties are set that could interfere with test
+        cleanSysProps()
+        // mock out the system and environment variables
+        SERVER_ENV_PROXY = MockEnvProxy()
+    }
+
+    @After fun cleanupProperties() {
+        resetEnvProxy()
+        cleanSysProps()
+    }
+
+    private fun cleanSysProps() {
         System.clearProperty(SYS_PROP_ZKRUN)
         for (mapping in SOLR_OVERRIDES) {
             System.clearProperty(mapping.key)
         }
         System.clearProperty(SYS_PROP_JBOSS_LOGGING)
+    }
 
-        // mock out the system and environment variables
-        SERVER_ENV_WRAPPER = mapOf()
-        SERVER_SYS_WRAPPER = hashMapOf()
+    class MockEnvProxy(private val initSys: Map<String, String> = emptyMap(),
+                       private val initEnv: Map<String, String> = emptyMap()) : EnvProxy {
+        val envVar = HashMap<String, String>(initEnv)
+        val sysVar = HashMap<String, String>(initSys)
+
+        override fun readEnvProperty(key: String): Any? {
+            return envVar.get(key)
+        }
+
+        override fun readSysProperty(key: String): Any? {
+            return sysVar.get(key)
+        }
+
+        override fun writeSysProperty(key: String, value: String) {
+            sysVar.put(key, value)
+        }
+
+        override fun clearSysProperty(key: String) {
+            sysVar.remove(key)
+        }
+
+        override fun envPropertiesAsMap(): Map<out Any, Any> {
+            return envVar
+        }
+
+        override fun sysPropertiesAsMap(): Map<out Any, Any> {
+            return sysVar
+        }
     }
 
     @Test fun testThatLoggingForJBossIsSetup() {
         // the system property for jboss logging should magically appear after configuration
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_JBOSS_LOGGING))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JBOSS_LOGGING))
         loadConfigFile("")
-        assertNotNull(SERVER_SYS_WRAPPER.get(SYS_PROP_JBOSS_LOGGING))
+        assertNotNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JBOSS_LOGGING))
     }
 
     @Test fun testNoZkRunOrZkHostEnvSysProp() {
         // if system prop zkRun or zkHost is not set, we should be empty in our configuration, and the system properties should be blank after
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKRUN))
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
-        assertNull(SERVER_ENV_WRAPPER.get(SYS_PROP_ZKRUN))
-        assertNull(SERVER_ENV_WRAPPER.get(SYS_PROP_ZKHOST))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKRUN))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKHOST))
+        assertNull(SERVER_ENV_PROXY.readEnvProperty(SYS_PROP_ZKRUN))
+        assertNull(SERVER_ENV_PROXY.readEnvProperty(SYS_PROP_ZKHOST))
         val cfg = makeEmptyConfig()
         assertFalse(cfg.zkRun)
         assertTrue(cfg.zkHost.trim().isEmpty())
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKRUN))
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
-        assertNull(SERVER_ENV_WRAPPER.get(SYS_PROP_ZKRUN))
-        assertNull(SERVER_ENV_WRAPPER.get(SYS_PROP_ZKHOST))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKRUN))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKHOST))
+        assertNull(SERVER_ENV_PROXY.readEnvProperty(SYS_PROP_ZKRUN))
+        assertNull(SERVER_ENV_PROXY.readEnvProperty(SYS_PROP_ZKHOST))
     }
 
 
     @Test fun testZkRunPresent() {
         // if system prop zkRun is set before, our config value should be true, and zkRun should exist after
-        SERVER_SYS_WRAPPER = hashMapOf(SYS_PROP_ZKRUN to "")
+        SERVER_ENV_PROXY = MockEnvProxy(initSys = mapOf(SYS_PROP_ZKRUN to ""))
         assertTrue(makeEmptyConfig().zkRun)
-        assertNotNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKRUN))
+        assertNotNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKRUN))
     }
 
     @Test fun testZkHostPresent() {
         val testVal = "one,two,three"
         // if system prop zkHost is set before, our config value should be true, and zkHost should exist after
-        SERVER_SYS_WRAPPER = hashMapOf(SYS_PROP_ZKHOST to testVal)
+        SERVER_ENV_PROXY = MockEnvProxy(initSys = mapOf(SYS_PROP_ZKHOST to testVal))
         assertEquals(testVal, makeEmptyConfig().zkHost)
-        assertEquals(testVal, SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
+        assertEquals(testVal, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKHOST))
     }
 
     @Test fun testZkRunAndZkHostNotPresentButSetByConfig() {
@@ -105,13 +139,13 @@ class TestConfigLoading {
                         ${OUR_PROP_ZKHOST}="${testVal}"
                     }
                   """
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKRUN))
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKRUN))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKHOST))
         val cfg = makeConfig(cfgHocon)
         assertTrue(cfg.zkRun)
         assertEquals(testVal, cfg.zkHost)
-        assertNotNull(SERVER_SYS_WRAPPER.get(SYS_PROP_ZKRUN))
-        assertEquals(testVal, SERVER_SYS_WRAPPER.get(SYS_PROP_ZKHOST))
+        assertNotNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKRUN))
+        assertEquals(testVal, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_ZKHOST))
     }
 
     @Test fun testJettyPortHostSolrHomeSolrLogAbsent() {
@@ -128,9 +162,9 @@ class TestConfigLoading {
                         ${OUR_PROP_HTTP_HOST}="${testHost}"
                     }
                   """
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
 
         val cfg = makeConfig(cfgHocon)
 
@@ -139,9 +173,9 @@ class TestConfigLoading {
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
-        assertEquals(testPort.toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertEquals(testPort.toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertEquals(testHome, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
     }
 
     @Test fun testConfigOverridesEnvironment() {
@@ -158,13 +192,13 @@ class TestConfigLoading {
                         ${OUR_PROP_HTTP_HOST}="${testHost}"
                     }
                   """
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertNull(SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertNull(SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
 
-        SERVER_ENV_WRAPPER = mapOf(SYS_PROP_JETTY_PORT to "10101",
+        SERVER_ENV_PROXY = MockEnvProxy(initEnv = mapOf(SYS_PROP_JETTY_PORT to "10101",
                 SYS_PROP_SOLR_HOME to "badHome",
-                SYS_PROP_SOLR_LOG to "badLog")
+                SYS_PROP_SOLR_LOG to "badLog"))
 
         val cfg = makeConfig(cfgHocon)
 
@@ -173,9 +207,9 @@ class TestConfigLoading {
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
-        assertEquals(testPort.toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertEquals(testPort.toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertEquals(testHome, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
     }
 
     @Test fun testSysPropOverridesConfigOverridesEnvironment() {
@@ -193,12 +227,13 @@ class TestConfigLoading {
                         ${OUR_PROP_HTTP_HOST}="${testHost}"
                     }
                   """
-        SERVER_SYS_WRAPPER = hashMapOf(SYS_PROP_JETTY_PORT to "5151",
+        SERVER_ENV_PROXY = MockEnvProxy(initSys = mapOf(
+                SYS_PROP_JETTY_PORT to "5151",
                 "$SOLR_UNDERTOW_CONFIG_PREFIX.$OUR_PROP_HTTP_PORT" to testPort.toString(),
-                SYS_PROP_SOLR_HOME to testHome)
-        SERVER_ENV_WRAPPER = mapOf(SYS_PROP_JETTY_PORT to "10101",
-                SYS_PROP_SOLR_HOME to "worseHome",
-                SYS_PROP_SOLR_LOG to "worseLog")
+                SYS_PROP_SOLR_HOME to testHome),
+                initEnv = mapOf(SYS_PROP_JETTY_PORT to "10101",
+                        SYS_PROP_SOLR_HOME to "worseHome",
+                        SYS_PROP_SOLR_LOG to "worseLog"))
 
         val cfg = makeConfig(cfgHocon)
 
@@ -207,9 +242,9 @@ class TestConfigLoading {
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
-        assertEquals(testPort.toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertEquals(testPort.toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertEquals(testHome, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
     }
 
     @Test fun testJettyPortSolrHomeSolrLogPresentUsingLegacySysProps() {
@@ -218,9 +253,10 @@ class TestConfigLoading {
         val testHome = "/already/my/solr/home"
         val testLogs = "/already/my/solr/logs"
 
-        SERVER_SYS_WRAPPER = hashMapOf(SYS_PROP_JETTY_PORT to testPort.toString(),
+        SERVER_ENV_PROXY = MockEnvProxy(initSys = mapOf(
+                SYS_PROP_JETTY_PORT to testPort.toString(),
                 SYS_PROP_SOLR_HOME to testHome,
-                SYS_PROP_SOLR_LOG to testLogs)
+                SYS_PROP_SOLR_LOG to testLogs))
 
         val cfg = makeEmptyConfig()
 
@@ -230,9 +266,9 @@ class TestConfigLoading {
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
-        assertEquals(testPort.toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertEquals(testPort.toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertEquals(testHome, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
     }
 
     @Test fun testJettyPortSolrHomeSolrLogPresentUsingOurSysProps() {
@@ -241,9 +277,10 @@ class TestConfigLoading {
         val testHome = "/already/my/solr/home"
         val testLogs = "/already/my/solr/logs"
 
-        SERVER_SYS_WRAPPER = hashMapOf("$SOLR_UNDERTOW_CONFIG_PREFIX.$OUR_PROP_HTTP_PORT" to testPort.toString(),
+        SERVER_ENV_PROXY = MockEnvProxy(initSys = mapOf(
+                "$SOLR_UNDERTOW_CONFIG_PREFIX.$OUR_PROP_HTTP_PORT" to testPort.toString(),
                 "$SOLR_UNDERTOW_CONFIG_PREFIX.$OUR_PROP_SOLR_HOME" to testHome,
-                "$SOLR_UNDERTOW_CONFIG_PREFIX.$OUR_PROP_SOLR_LOG" to testLogs)
+                "$SOLR_UNDERTOW_CONFIG_PREFIX.$OUR_PROP_SOLR_LOG" to testLogs))
 
         val cfg = makeEmptyConfig()
 
@@ -253,9 +290,9 @@ class TestConfigLoading {
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
-        assertEquals(testPort.toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertEquals(testPort.toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertEquals(testHome, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
     }
 
     @Test fun testJettyPortSolrHomeSolrLogPresentUsingEnv() {
@@ -264,9 +301,10 @@ class TestConfigLoading {
         val testHome = "/already/my/solr/home"
         val testLogs = "/already/my/solr/logs"
 
-        SERVER_ENV_WRAPPER = mapOf(SYS_PROP_JETTY_PORT to testPort.toString(),
+        SERVER_ENV_PROXY = MockEnvProxy(initEnv = mapOf(
+                SYS_PROP_JETTY_PORT to testPort.toString(),
                 SYS_PROP_SOLR_HOME to testHome,
-                SYS_PROP_SOLR_LOG to testLogs)
+                SYS_PROP_SOLR_LOG to testLogs))
 
         val cfg = makeEmptyConfig()
 
@@ -276,9 +314,9 @@ class TestConfigLoading {
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
-        assertEquals(testPort.toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertEquals(testPort.toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertEquals(testHome, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
     }
 
 
@@ -288,9 +326,9 @@ class TestConfigLoading {
         val testHome = "/already/my/solr/home"
         val testLogs = "/already/my/solr/logs"
 
-        SERVER_ENV_WRAPPER = mapOf(SYS_PROP_JETTY_PORT to testPort.toString(),
-                SYS_PROP_SOLR_LOG to testLogs)
-        SERVER_SYS_WRAPPER = hashMapOf(SYS_PROP_SOLR_HOME to testHome)
+        SERVER_ENV_PROXY = MockEnvProxy(initSys = mapOf(SYS_PROP_SOLR_HOME to testHome),
+                initEnv = mapOf(SYS_PROP_JETTY_PORT to testPort.toString(),
+                        SYS_PROP_SOLR_LOG to testLogs))
 
         val cfg = makeEmptyConfig()
 
@@ -300,9 +338,9 @@ class TestConfigLoading {
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
-        assertEquals(testPort.toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertEquals(testPort.toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertEquals(testHome, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
     }
 
     @Test fun testSysPropWinsOverEnv() {
@@ -311,12 +349,14 @@ class TestConfigLoading {
         val testHome = "/already/my/solr/home"
         val testLogs = "/already/my/solr/logs"
 
-        SERVER_ENV_WRAPPER = mapOf(SYS_PROP_JETTY_PORT to "9999",
-                SYS_PROP_SOLR_HOME to "badhome",
-                SYS_PROP_SOLR_LOG to "badlog")
-        SERVER_SYS_WRAPPER = hashMapOf(SYS_PROP_JETTY_PORT to testPort.toString(),
+        SERVER_ENV_PROXY = MockEnvProxy(initSys = mapOf(
+                SYS_PROP_JETTY_PORT to testPort.toString(),
                 SYS_PROP_SOLR_HOME to testHome,
-                SYS_PROP_SOLR_LOG to testLogs)
+                SYS_PROP_SOLR_LOG to testLogs),
+                initEnv = mapOf(
+                        SYS_PROP_JETTY_PORT to "9999",
+                        SYS_PROP_SOLR_HOME to "badhome",
+                        SYS_PROP_SOLR_LOG to "badlog"))
 
         val cfg = makeEmptyConfig()
 
@@ -326,9 +366,9 @@ class TestConfigLoading {
         assertEquals(Paths.get(testHome), cfg.solrHome)
         assertEquals(Paths.get(testLogs), cfg.solrLogs)
 
-        assertEquals(testPort.toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_JETTY_PORT))
-        assertEquals(testHome, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertEquals(testLogs, SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertEquals(testPort.toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_JETTY_PORT))
+        assertEquals(testHome, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs, SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
     }
 
     @Test fun testThreadMinimum() {
@@ -396,7 +436,7 @@ class TestConfigLoading {
         assertEquals(testLibExt.toCfgDir(), cfg.libExtDir)
         assertTrue(cfg.hasLibExtDir())
 
-        assertEquals(testHome.toCfgDir().toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_HOME))
-        assertEquals(testLogs.toCfgDir().toString(), SERVER_SYS_WRAPPER.get(SYS_PROP_SOLR_LOG))
+        assertEquals(testHome.toCfgDir().toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_HOME))
+        assertEquals(testLogs.toCfgDir().toString(), SERVER_ENV_PROXY.readSysProperty(SYS_PROP_SOLR_LOG))
     }
 }

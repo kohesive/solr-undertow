@@ -21,23 +21,24 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient
 import org.apache.solr.client.solrj.request.CoreAdminRequest
 import org.apache.solr.common.params.SolrParams
 import org.apache.solr.common.util.NamedList
+import org.apache.solr.core.SolrCore
 import org.apache.solr.request.SolrQueryRequest
 import org.apache.solr.search.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.slf4j.LoggerFactory
-import uy.klutter.config.typesafe.MapAsConfig
-import uy.klutter.config.typesafe.loadConfig
 import uy.klutter.config.typesafe.render
 import uy.klutter.core.common.verifiedBy
 import uy.klutter.core.jdk7.deleteRecursively
 import uy.klutter.core.jdk7.exists
 import uy.kohesive.solr.undertow.*
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class TestServerWithPlugin {
 
@@ -49,19 +50,28 @@ class TestServerWithPlugin {
         assertTrue(coreWithPluginDir.exists(), "test core w/plugin does not exist $coreWithPluginDir")
 
         // make sure no system properties are set that could interfere with test
-        System.clearProperty(SYS_PROP_ZKRUN)
-        for (mapping in SOLR_OVERRIDES) {
-            System.clearProperty(mapping.key)
-        }
-        System.clearProperty(SYS_PROP_JBOSS_LOGGING)
+        resetEnvProxy()
+        cleanSysProps()
 
         routeJbossLoggingToSlf4j()
+
+        // System.setProperty("solr.solr.home", workingDir.resolve("solr-home").toString())
 
         cleanFiles()
     }
 
     @After fun cleanUpTempFiles() {
         cleanFiles()
+        resetEnvProxy()
+        cleanSysProps()
+    }
+
+    private fun cleanSysProps() {
+        System.clearProperty(SYS_PROP_ZKRUN)
+        for (mapping in SOLR_OVERRIDES) {
+            System.clearProperty(mapping.key)
+        }
+        System.clearProperty(SYS_PROP_JBOSS_LOGGING)
     }
 
     private fun cleanFiles() {
@@ -74,13 +84,16 @@ class TestServerWithPlugin {
         val config = mapOf(
                 OUR_PROP_SOLR_WAR_ALLOW_OMIT to true,
                 OUR_PROP_SOLR_WAR to "",
+                OUR_PROP_SOLR_VERSION to SolrCore::class.java.`package`.specificationVersion,
                 OUR_PROP_SOLR_LOG to workingDir.resolve("solr-logs").toString(),
                 OUR_PROP_TEMP_DIR to workingDir.resolve("solr-temp").toString(),
                 OUR_PROP_SOLR_HOME to workingDir.resolve("solr-home").toString(),
                 "shutdown.password" to "!1234!"
-        ).mapKeys { SOLR_UNDERTOW_CONFIG_PREFIX + ".${it.key}"}
+        ).mapKeys { SOLR_UNDERTOW_CONFIG_PREFIX + ".${it.key}" }
 
         val configLoader = ServerConfigFromOverridesAndReference(workingDir, config)
+
+        assertNotNull(System.getProperty("solr.solr.home"))
 
         println(configLoader.resolvedConfig.render())
 
