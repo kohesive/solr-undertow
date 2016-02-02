@@ -6,14 +6,21 @@ buildscript {
         maven {
             url 'http://oss.sonatype.org/content/repositories/snapshots'
         }
+        maven {
+            url 'http://dl.bintray.com/kotlin/kotlin-eap'
+        }
+        maven {
+            url 'http://dl.bintray.com/jaysonminard/kohesive'
+        }
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${version_kotlin}"
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.4'
     }
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.5'
+    gradleVersion = '2.10'
 }
 
 apply plugin: 'java'
@@ -21,8 +28,10 @@ apply plugin: 'kotlin'
 apply plugin: 'application'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+apply plugin: 'com.bmuschko.nexus'
+apply plugin: 'com.jfrog.bintray'
 
-mainClassName = "org.bremeld.solr.undertow.UndertowPackage"
+mainClassName = "uy.kohesive.solr.undertow.App"
 applicationDefaultJvmArgs = ["-Dfile.encoding=UTF-8"]
 
 // set other parameters in SOLR_UNDERTOW_OPTS environment variable, for example:
@@ -119,6 +128,12 @@ repositories {
     maven {
         url 'http://oss.sonatype.org/content/repositories/snapshots'
     }
+    maven {
+        url 'http://dl.bintray.com/kotlin/kotlin-eap'
+    }
+    maven {
+        url 'http://dl.bintray.com/jaysonminard/kohesive'
+    }
 }
 
 dependencies {
@@ -138,5 +153,70 @@ dependencies {
     runtime "org.slf4j:jul-to-slf4j:${version_slf4j}"
     runtime "org.slf4j:log4j-over-slf4j:${version_slf4j}"
 
+    // only for debugging purposes, so we have the correct version of Solr for breakpoints
+    // runtime "org.apache.solr:solr-core:${version_solr}"
+
     testCompile "junit:junit:${version_junit}"
+    testCompile "org.jetbrains.kotlin:kotlin-test:${version_kotlin}"
+
+    // test cases might use Solr
+    testCompile "org.apache.solr:solr-solrj:${version_solr}"
+    testCompile "org.apache.solr:solr-core:${version_solr}"
+}
+
+modifyPom {
+    project {
+        name 'Solr-Undertow'
+        description 'Solr / SolrCloud running in high performance server - tiny, fast startup, simple to configure, easy deployment without an application server.'
+        url 'https://github.com/kohesive/solr-undertow'
+        inceptionYear '2014'
+
+        scm {
+            url 'https://github.com/kohesive/solr-undertow'
+            connection 'scm:https://github.com/kohesive/solr-undertow.git'
+            developerConnection 'scm:git@github.com:kohesive/solr-undertow.git'
+        }
+
+        licenses {
+            license {
+                name 'Apache-2.0'
+                url 'https://github.com/kohesive/solr-undertow/blob/master/LICENSE.txt'
+                distribution 'repo'
+            }
+        }
+
+        developers {
+            developer {
+                id 'apatrida'
+                name 'Jayson Minard'
+                email 'jayson.minard@gmail.com'
+            }
+        }
+    }
+
+}
+
+nexus {
+    sign = true
+}
+
+bintray {
+    user = "$bintrayUser"
+    key = "$bintrayKey"
+    pkg {
+        repo = 'kohesive'
+        name = project.name
+        licenses = ['Apache-2.0']
+        vcsUrl = 'scm:git:git@github.com:kohesive/solr-undertow.git'
+
+        version {
+            name = project.version
+            desc = 'n/a'
+            released = new Date()
+        }
+        publicDownloadNumbers = false
+        configurations = ['archives']
+    }
+    publish = true
+    dryRun = false
 }
