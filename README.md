@@ -13,7 +13,7 @@ Releases [are available on GitHub](https://github.com/kohesive/solr-undertow/rel
 
 #### Usage
 
-Usage is simple, you only need a configuration file and a Solr distribution (or in the olden days, a WAR):
+Usage is simple, you only need a configuration file and a [Solr distribution](https://github.com/kohesive/solr-undertow/blob/master/README.md#solr-distributions):
 
 ```sh
 bin/solr-undertow <configurationFile>
