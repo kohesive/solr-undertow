@@ -40,7 +40,6 @@ import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.net.URL
-import java.net.URLClassLoader
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
@@ -333,7 +332,8 @@ class Server(cfgLoader: ServerConfigLoader) {
             return FAILED_DEPLOYMENT
         }
 
-        return DeployedDistributionInfo(true, tempDirHtml, URLClassLoader(jarFiles.toTypedArray(), ClassLoader.getSystemClassLoader()))
+        val classLoader = ChildFirstClassloader(jarFiles, this.javaClass.classLoader)
+        return DeployedDistributionInfo(true, tempDirHtml, classLoader)
     }
 
     private fun buildSolrServletHandler(solrWarDeployment: DeployedDistributionInfo): ServletDeploymentAndHandler {

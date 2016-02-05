@@ -125,8 +125,10 @@ abstract class ServerConfigReplicatedToSysProps: ServerConfigLoader {
     }
 }
 
+val referenceConfigLoader = ResourceConfig("solr-undertow-reference.conf")
+
 class ServerConfigFromOverridesAndReference(override val workingDir: Path, private val overrideConfig: Map<String, Any>): ServerConfigReplicatedToSysProps() {
-    override val resolvedConfig = loadConfig(MapAsConfig(overrideConfig), ReferenceConfig()) then { config ->
+    override val resolvedConfig = loadConfig(MapAsConfig(overrideConfig), referenceConfigLoader) then { config ->
         writeRelevantSystemProperties(config)
     }
 }
@@ -142,7 +144,7 @@ class ServerConfigLoaderFromFileAndSolrEnvironment(private val configFile: Path)
     override val resolvedConfig = loadConfig(PropertiesAsConfig(readRelevantProperties(SERVER_ENV_PROXY.sysPropertiesAsMap())),
                                     FileConfig(configFile),
                                     PropertiesAsConfig(readRelevantProperties(SERVER_ENV_PROXY.envPropertiesAsMap())),
-                                    ReferenceConfig()) then { config ->
+                                    referenceConfigLoader) then { config ->
         writeRelevantSystemProperties(config)
         routeJbossLoggingToSlf4j()
     }

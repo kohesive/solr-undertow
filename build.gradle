@@ -6,12 +6,11 @@ buildscript {
         maven {
             url 'http://oss.sonatype.org/content/repositories/snapshots'
         }
+        /*
         maven {
             url 'http://dl.bintray.com/kotlin/kotlin-eap'
         }
-        maven {
-            url 'http://dl.bintray.com/jaysonminard/kohesive'
-        }
+        */
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${version_kotlin}"
@@ -129,11 +128,17 @@ repositories {
     maven {
         url 'http://oss.sonatype.org/content/repositories/snapshots'
     }
+    /*
     maven {
         url 'http://dl.bintray.com/kotlin/kotlin-eap'
     }
     maven {
         url 'http://dl.bintray.com/jaysonminard/kohesive'
+    }
+    */
+    // if ever compile against Solr 4.10.4 it needs this
+    maven {
+        url 'https://maven.restlet.com'
     }
 }
 
@@ -162,7 +167,10 @@ dependencies {
 
     // test cases might use Solr
     testCompile "org.apache.solr:solr-solrj:${version_solr}"
-    testCompile "org.apache.solr:solr-core:${version_solr}"
+    testCompile("org.apache.solr:solr-core:${version_solr}") {
+        exclude group:"org.eclipse.jetty"
+        exclude group:"org.eclipse.jetty.orbit"
+    }
 }
 
 modifyPom {
