@@ -186,7 +186,8 @@ public class Server(cfgLoader: ServerConfigLoader) {
             return FAILED_DEPLOYMENT
         }
 
-        return DeployedWarInfo(true, tempDirThisSolr, tempDirHtml, tempDirJars, URLClassLoader(jarFiles.copyToArray(), ClassLoader.getSystemClassLoader()))
+        val classLoader = ChildFirstClassloader(jarFiles, this.javaClass.getClassLoader())
+        return DeployedWarInfo(true, tempDirThisSolr, tempDirHtml, tempDirJars, classLoader)
     }
 
     private fun buildSolrServletHandler(solrWarDeployment: DeployedWarInfo): HttpHandler {
