@@ -85,7 +85,6 @@ An [example using SOLR_UNDERTOW_OPTS](#custom-jvm-parameters) environment variab
 Other Notes
 ===========
 
-
 #### Tuning
 
 **Read about tuning** in the [TUNNING.md file](./TUNING.MD)
@@ -210,7 +209,19 @@ curl -X GET http://localhost:9983?password=diediedie
 ```
 
 A user created example of scripting can be seen in a [GIST from @magicdude4eva](https://gist.github.com/magicdude4eva/3b5fec150fbcaafdc34c) where the stop script properly checks exit codes, and does a kill command against the `PID` if the graceful shutdown request fails.
- 
+
+
+#### Usage as an embedded library
+
+Solr-Undertow can be embedded in any JVM app.  Include the dependency:
+
+```
+uy.kohesive.solr:solr-undertow:1.6.0-BETA-4
+```
+
+Then use the App (has `main()` static method) or Server class (more control of configuration) to start the process.
+
+
 Building Your Own Binary
 ========
 
