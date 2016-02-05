@@ -1,7 +1,7 @@
 solr-undertow
 =============
 
-[![CircleCI branch](https://img.shields.io/circleci/project/kohesive/solr-undertow/master.svg)](https://circleci.com/gh/kohesive/solr-undertow/tree/master) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/kohesive/solr-undertow/blob/master/LICENSE.txt) [![Kotlin](https://img.shields.io/badge/kotlin-1.0.0--rc--1017-blue.svg)](http://kotlinlang.org)
+[![CircleCI branch](https://img.shields.io/circleci/project/kohesive/solr-undertow/master.svg)](https://circleci.com/gh/kohesive/solr-undertow/tree/master) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/kohesive/solr-undertow/blob/master/LICENSE.txt) [![Kotlin](https://img.shields.io/badge/kotlin-1.0.0--rc--1036-blue.svg)](http://kotlinlang.org)
 
 [Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.x or 5.x.  Less than 7MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
 
@@ -195,7 +195,6 @@ You can also specify either of these prebuilt formats instead of using macros, a
 
 **see also:** [Tuning Solr-Undertow](./TUNING.MD)
 
-
 #### Scripting Startup / Shutdown
 
 Solr-Undertow listens on the configured shutdown HTTP port (defaults to 9983) for a GET request, single parameter of `password` which must be set to a value matching the configured password.
@@ -227,13 +226,13 @@ Building Your Own Binary
 
 You may download a release under the releases here, or you can build your own binary.
 
-`./gradlew build distTar distWithSolr`
+`./gradlew build distAll`
 
-and the resulting binaries will be under `./build/distributions` as .tgz files.  
+and the resulting binaries will be under `./build/distributions` as `.tgz` and `.zip` files.
 
 #### Building with IntelliJ
 
-Open the `build.gradle` file as a project, accept the default Gradle wrapper, and then fixup JDK to be 1.7 or newer.  Be sure you have Kotlin plugin installed and that it matches the version in the Gradle build, check the [gradle.properties file](./gradle.properties) for Kotlin version number.
+Open the `build.gradle` file as a project, accept the default Gradle wrapper, and then fixup JDK to be 1.7 or newer.  Be sure you have Kotlin plugin installed and that it matches the version in the Gradle build or newer, check the [gradle.properties file](./gradle.properties) for Kotlin version number.
 
 
 
