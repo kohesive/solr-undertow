@@ -185,7 +185,7 @@ Building Your Own Binary
 
 You may download a release under the releases here, or you can build your own binary.
 
-`./gradlew build distTar distWithSolr`
+`./gradlew clean build test distAll`
 
 and the resulting binaries will be under `./build/distributions` as .tgz files.  
 
