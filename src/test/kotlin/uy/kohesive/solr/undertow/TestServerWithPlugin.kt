@@ -17,6 +17,7 @@ package uy.kohesive.solr.undertow.tests
 
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.Query
+import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.client.solrj.impl.HttpSolrClient
 import org.apache.solr.client.solrj.request.CoreAdminRequest
 import org.apache.solr.common.params.SolrParams
@@ -26,6 +27,8 @@ import org.apache.solr.request.SolrQueryRequest
 import org.apache.solr.search.*
 import org.junit.After
 import org.junit.Before
+import org.junit.BeforeClass
+import org.junit.AfterClass
 import org.junit.Test
 import org.slf4j.LoggerFactory
 import uy.klutter.config.typesafe.render
@@ -40,83 +43,103 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-class TestServerWithPlugin {
+    class TestServerWithPlugin {
+        companion object {
+            val workingDir = Paths.get("test-data/solr-standalone").toAbsolutePath()
+            val coreWithPluginDir = workingDir.resolve("plugin-test/collection1")
 
-    val workingDir = Paths.get("test-data/solr-standalone").toAbsolutePath()
-    val coreWithPluginDir = workingDir.resolve("plugin-test/collection1")
+            lateinit var server: Server
 
+            @BeforeClass @JvmStatic fun setup() {
+                assertTrue(coreWithPluginDir.exists(), "test core w/plugin does not exist $coreWithPluginDir")
 
-    @Before fun clearSystemProperties() {
-        assertTrue(coreWithPluginDir.exists(), "test core w/plugin does not exist $coreWithPluginDir")
+                // make sure no system properties are set that could interfere with test
+                resetEnvProxy()
+                cleanSysProps()
 
-        // make sure no system properties are set that could interfere with test
-        resetEnvProxy()
-        cleanSysProps()
+                routeJbossLoggingToSlf4j()
 
-        routeJbossLoggingToSlf4j()
+                cleanFiles()
 
-        // System.setProperty("solr.solr.home", workingDir.resolve("solr-home").toString())
+                val config = mapOf(
+                        OUR_PROP_SOLR_WAR_ALLOW_OMIT to true,
+                        OUR_PROP_SOLR_WAR to "",
+                        OUR_PROP_SOLR_VERSION to SolrCore::class.java.`package`.specificationVersion,
+                        OUR_PROP_SOLR_LOG to workingDir.resolve("solr-logs").toString(),
+                        OUR_PROP_TEMP_DIR to workingDir.resolve("solr-temp").toString(),
+                        OUR_PROP_SOLR_HOME to workingDir.resolve("solr-home").toString(),
+                        "shutdown.password" to "!1234!"
+                ).mapKeys { SOLR_UNDERTOW_CONFIG_PREFIX + ".${it.key}" }
 
-        cleanFiles()
-    }
+                val configLoader = ServerConfigFromOverridesAndReference(workingDir, config) verifiedBy { loader ->
+                    println(loader.resolvedConfig.render())
 
-    @After fun cleanUpTempFiles() {
-        cleanFiles()
-        resetEnvProxy()
-        cleanSysProps()
-    }
+                    ServerConfig(LoggerFactory.getLogger(TestServerWithPlugin::class.java), loader) verifiedBy {
+                        if (!it.validate()) {
+                            fail("invalid configuration")
+                        }
+                    }
+                }
 
-    private fun cleanSysProps() {
-        System.clearProperty(SYS_PROP_ZKRUN)
-        for (mapping in SOLR_OVERRIDES) {
-            System.clearProperty(mapping.key)
-        }
-        System.clearProperty(SYS_PROP_JBOSS_LOGGING)
-    }
+                assertNotNull(System.getProperty("solr.solr.home"))
 
-    private fun cleanFiles() {
-        coreWithPluginDir.resolve("data").deleteRecursively()
-        Files.deleteIfExists(coreWithPluginDir.resolve("core.properties"))
-    }
+                server = Server(configLoader)
+                val (serverStarted, message) = server.run()
+                if (!serverStarted) {
+                    fail("Server not started: '$message'")
+                }
+            }
 
-    @Test
-    fun testServerLoadsPlugin() {
-        val config = mapOf(
-                OUR_PROP_SOLR_WAR_ALLOW_OMIT to true,
-                OUR_PROP_SOLR_WAR to "",
-                OUR_PROP_SOLR_VERSION to SolrCore::class.java.`package`.specificationVersion,
-                OUR_PROP_SOLR_LOG to workingDir.resolve("solr-logs").toString(),
-                OUR_PROP_TEMP_DIR to workingDir.resolve("solr-temp").toString(),
-                OUR_PROP_SOLR_HOME to workingDir.resolve("solr-home").toString(),
-                "shutdown.password" to "!1234!"
-        ).mapKeys { SOLR_UNDERTOW_CONFIG_PREFIX + ".${it.key}" }
+            @AfterClass @JvmStatic fun teardown() {
+                server.shutdown()
+                cleanFiles()
+                resetEnvProxy()
+                cleanSysProps()
+            }
 
-        val configLoader = ServerConfigFromOverridesAndReference(workingDir, config)
+            private fun cleanSysProps() {
+                System.clearProperty(SYS_PROP_ZKRUN)
+                for (mapping in SOLR_OVERRIDES) {
+                    System.clearProperty(mapping.key)
+                }
+                System.clearProperty(SYS_PROP_JBOSS_LOGGING)
+            }
 
-        assertNotNull(System.getProperty("solr.solr.home"))
-
-        println(configLoader.resolvedConfig.render())
-
-        val cfg = ServerConfig(LoggerFactory.getLogger("TestServerWithPlugin"), configLoader) verifiedBy {
-            if (!it.validate()) {
-                fail("invalid configuration")
+            private fun cleanFiles() {
+                // don't leave any test files behind
+                coreWithPluginDir.resolve("data").deleteRecursively()
+                Files.deleteIfExists(coreWithPluginDir.resolve("core.properties"))
+                Files.deleteIfExists(coreWithPluginDir.resolve("core.properties.unloaded"))
             }
         }
 
-        val server = Server(configLoader)
-        val (serverStarted, message) = server.run()
-        if (!serverStarted) {
-            fail("Server not started: '$message'")
+        val adminClient: SolrClient = HttpSolrClient("http://localhost:8983/solr/")
+
+        @Before fun prepareTest() {
+            // anything before each test?
         }
 
-        val solrAdmin = HttpSolrClient("http://localhost:8983/solr/")
-        println("Loading core 'withplugin' from dir ${coreWithPluginDir.toString()}")
-        val response = CoreAdminRequest.createCore("collection1", coreWithPluginDir.toString(), solrAdmin)
-        assertEquals(0, response.status)
+        @After fun cleanupTest() {
+            unloadCoreIfExists("tempCollection1")
+            unloadCoreIfExists("tempCollection2")
+            unloadCoreIfExists("tempCollection3")
+        }
 
-        server.shutdown()
+        private fun unloadCoreIfExists(name: String) {
+            try {
+                CoreAdminRequest.unloadCore(name, adminClient)
+            } catch (ex: Throwable) {
+                // nop
+            }
+        }
+
+        @Test
+        fun testServerLoadsPlugin() {
+            println("Loading core 'withplugin' from dir ${coreWithPluginDir.toString()}")
+            val response = CoreAdminRequest.createCore("tempCollection1", coreWithPluginDir.toString(), adminClient)
+            assertEquals(0, response.status)
+        }
     }
-}
 
 class NothingQueryParserPlugin : QParserPlugin() {
     override fun init(args: NamedList<*>?) {
