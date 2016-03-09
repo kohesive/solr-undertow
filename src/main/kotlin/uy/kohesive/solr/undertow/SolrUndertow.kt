@@ -424,7 +424,9 @@ class Server(cfgLoader: ServerConfigLoader) {
         val pathHandler = Handlers.path(Handlers.redirect(cfg.solrContextPath.mustEndWith('/')+"index.html"))
                 .addPrefixPath(cfg.solrContextPath, wrappedHandlers)
 
-        return ServletDeploymentAndHandler(servletDeploymentMgr, pathHandler)
+        val oldAdminUiFixer = Handlers.path(pathHandler).addExactPath(cfg.solrContextPath, Handlers.redirect(cfg.solrContextPath.mustEndWith('/')+"admin.html"))
+
+        return ServletDeploymentAndHandler(servletDeploymentMgr, oldAdminUiFixer)
     }
 
     private class RequestLimitHelper(private val rlCfg: RequestLimitConfig) {
