@@ -46,7 +46,13 @@ import kotlin.test.fail
     class TestServerWithPlugin {
         companion object {
             val workingDir = Paths.get("test-data/solr-standalone").toAbsolutePath()
-            val coreWithPluginDir = workingDir.resolve("plugin-test/collection1")
+            val solrVersion = SolrCore::class.java.`package`.specificationVersion
+            val coreWithPluginDir = if (solrVersion.substringBefore('.').toInt() >= 6)  {
+                workingDir.resolve("plugin-test/collection-solr6")
+            } else {
+                workingDir.resolve("plugin-test/collection1")
+            }
+
 
             lateinit var server: Server
 

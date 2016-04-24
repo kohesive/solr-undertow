@@ -337,6 +337,16 @@ class Server(cfgLoader: ServerConfigLoader) {
     }
 
     private fun buildSolrServletHandler(solrWarDeployment: DeployedDistributionInfo): ServletDeploymentAndHandler {
+        val solrVersion = cfg.solrVersion
+        val isSolr6 = solrVersion.substringBefore('.').toInt() == 6
+        val welcomePages = listOf("index.html", "old.html") +
+            if (isSolr6) {
+                emptyList()
+            }
+            else {
+                listOf("admin.html")
+            }
+
         // load all by name so we have no direct dependency on Solr
         val solrDispatchFilterClass = solrWarDeployment.classLoader.loadClass("org.apache.solr.servlet.SolrDispatchFilter").asSubclass(Filter::class.java)
         val solrZookeeprServletClass = try {
@@ -359,6 +369,7 @@ class Server(cfgLoader: ServerConfigLoader) {
         }
 
 
+
         // mimic solr web.xml file, minus old deprecated redirects from old UI...
         val deployment = Servlets.deployment()
                 .setClassLoader(solrWarDeployment.classLoader)
@@ -375,9 +386,11 @@ class Server(cfgLoader: ServerConfigLoader) {
                 .addFilterUrlMapping("SolrRequestFilter", "/*", DispatcherType.REQUEST)
                 .addServlets(
                         Servlets.servlet("LoadAdminUI", solrAdminUiServletClass)
-                                .addMapping("index.html")
-                                .addMapping("admin.html")
-                                .addMapping("old.html")
+                                .apply {
+                                    welcomePages.forEach {
+                                        addMapping(it)
+                                    }
+                                }
                                 .setRequireWelcomeFileMapping(true),
                         Servlets.servlet("SolrRestApi", solrRestApiServletClass)
                                 .addInitParam("org.restlet.application", solrRestApiClass.getName())
@@ -385,7 +398,7 @@ class Server(cfgLoader: ServerConfigLoader) {
                                 .setRequireWelcomeFileMapping(true)
                 )
                 .addMimeMapping(MimeMapping(".xsl", "application/xslt+xml"))
-                .addWelcomePages("index.html", "admin.html")
+                .addWelcomePages(welcomePages)
         solrWarDeployment.htmlDir?.let { htmlDir ->
             deployment.setResourceManager(FileResourceManager(solrWarDeployment.htmlDir.toFile(), 1024))
         }
@@ -424,7 +437,8 @@ class Server(cfgLoader: ServerConfigLoader) {
         val pathHandler = Handlers.path(Handlers.redirect(cfg.solrContextPath.mustEndWith('/')+"index.html"))
                 .addPrefixPath(cfg.solrContextPath, wrappedHandlers)
 
-        val oldAdminUiFixer = Handlers.path(pathHandler).addExactPath(cfg.solrContextPath, Handlers.redirect(cfg.solrContextPath.mustEndWith('/')+"admin.html"))
+        val redirectToAdmin = if (isSolr6) "index.html" else "admin.html"
+        val oldAdminUiFixer = Handlers.path(pathHandler).addExactPath(cfg.solrContextPath, Handlers.redirect(cfg.solrContextPath.mustEndWith('/')+redirectToAdmin))
 
         return ServletDeploymentAndHandler(servletDeploymentMgr, oldAdminUiFixer)
     }
