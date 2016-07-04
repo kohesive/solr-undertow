@@ -100,7 +100,7 @@ Solr-Undertow uses one of the following as a supported Solr distrubtion:
 
 * A `WAR` file from 5.2.1 or earlier 
 * A `Zip` full Solr distribution pre 5.2.1 that contains a `WAR` file in `server/webapps/solr.war` or `example/webapps/solr.war` 
-* A `Zip` full Solr distribution post 5.2.1 that conatins `server/solr-webapp/webapp` which is really an extracted `WAR` file
+* A `Zip` full Solr distribution post 5.2.1 that contains `server/solr-webapp/webapp` which is really an extracted `WAR` file
 * A `WAR` file you create by rezipping the contents of a distribution `server/solr-webapp/webapp` directory and naming it with `.war` extension.
 
 The smallest distribution is the WAR file, which you can create, or you can remove everything else from a distribution `Zip` file keeping only the contents of the `server/solr-webapp/webapp` directory (including the path names).
