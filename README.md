@@ -96,7 +96,17 @@ Other Notes
 
 #### Solr Distributions
 
-Solr-Undertow uses one of the following as a supported Solr distrubtion:
+Quick links to common Solr distributions:
+
+|Version|Download|
+|---|---|
+|4.10.4|http://archive.apache.org/dist/lucene/solr/4.10.4/solr-4.10.4.zip|
+|5.5.2|http://archive.apache.org/dist/lucene/solr/5.5.2/solr-5.5.2.zip|
+|6.0.1|http://archive.apache.org/dist/lucene/solr/6.0.1/solr-6.0.1.zip|
+|6.1.0|http://archive.apache.org/dist/lucene/solr/6.1.0/solr-6.1.0.zip|
+|6.2.0|http://archive.apache.org/dist/lucene/solr/6.2.0/solr-6.2.0.zip|
+
+Solr-Undertow supports the following patterns of distribuions:
 
 * A `WAR` file from 5.2.1 or earlier 
 * A `Zip` full Solr distribution pre 5.2.1 that contains a `WAR` file in `server/webapps/solr.war` or `example/webapps/solr.war` 
@@ -107,10 +117,7 @@ The smallest distribution is the WAR file, which you can create, or you can remo
 
 **For Solr 4.x you can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.4 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.4/solr-4.10.4.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
 
-**For Solr 5.x you download full distributions** from the main [Solr website](http://lucene.apache.org/solr/) or from the [past version archives](http://archive.apache.org/dist/lucene/solr/).   Some earlier 5.x versions have WAR files available as well.
-
-**For Solr 6.x you download a nightly build** from [Solr Build System](https://builds.apache.org/job/Solr-Artifacts-trunk/lastSuccessfulBuild/artifact/solr/package/)
-
+**For Solr 5.x and 6.x you download full distributions** from the main [Solr website](http://lucene.apache.org/solr/) or from the [past version archives](http://archive.apache.org/dist/lucene/solr/).   
 
 #### Custom JVM Parameters
 
