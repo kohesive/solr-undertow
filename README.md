@@ -9,8 +9,6 @@ This application launches a Solr distribution as a standalone server running a h
 
 Releases [are available on GitHub](https://github.com/kohesive/solr-undertow/releases).
 
-**NOTE:** Be sure to read the [Tuning Solr-Undertow](./TUNING.MD) guide.
-
 ### Usage
 
 Usage is simple, you only need [Solr-Undertow release](https://github.com/kohesive/solr-undertow/releases), a configuration file and a [Solr distribution](https://github.com/kohesive/solr-undertow/blob/master/README.md#solr-distributions):
@@ -85,10 +83,9 @@ An [example using SOLR_UNDERTOW_OPTS](#custom-jvm-parameters) environment variab
 Other Notes
 ===========
 
-### Tuning
+### Performance Tuning
 
-**Read about tuning** in the [TUNNING.md file](./TUNING.MD)
-
+For infomation about performance tuning, read the [Tuning Solr-Undertow](./TUNING.MD) guide.
 
 ### JDK 1.7
 
