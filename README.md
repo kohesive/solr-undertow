@@ -11,7 +11,7 @@ Releases [are available on GitHub](https://github.com/kohesive/solr-undertow/rel
 
 **NOTE:** Be sure to read the [Tuning Solr-Undertow](./TUNING.MD) guide.
 
-#### Usage
+### Usage
 
 Usage is simple, you only need a configuration file and a [Solr distribution](https://github.com/kohesive/solr-undertow/blob/master/README.md#solr-distributions):
 
@@ -27,7 +27,7 @@ bin/solr-undertow example/example.conf
 
 Then navigate your browser to `http://localhost:8983/solr`
 
-#### Configuration
+### Configuration
 
 The configuration file is on the JSON like [HOCON format](https://github.com/typesafehub/config/blob/master/HOCON.md) and loaded using [TypeSafe Config](https://github.com/typesafehub/config).  So any features it supports are supported here.
 
@@ -49,14 +49,14 @@ The defaults, and all configuration options can be seen in the [configuration de
 
 Configured directories are validated at startup to give clear error messages, they are checked for existance and readable/writeable attributes (depending on the directory).
 
-#### Example Configuration / Directory Tree
+### Example Configuration / Directory Tree
 
 Two example configurations are provided in the [example directory](example/):
 
 * [Basic configuration](example/example.conf)
 * [Configuration with request limitting](example/example-ratelimited.conf) (max concurrent requests + max queued requests)
 
-#### System and Environment Properties
+### System and Environment Properties
 
 When System or Environment variables are used, an order of precedence is used favoring the Solr-Undertow properties over legacy property names from Solr.  Note, not all variables are legal environment variables, and the use of env variables is not recommended, configuration or system properties is best.  Here is the exact order of configuration overriding:
 
@@ -85,16 +85,16 @@ An [example using SOLR_UNDERTOW_OPTS](#custom-jvm-parameters) environment variab
 Other Notes
 ===========
 
-#### Tuning
+### Tuning
 
 **Read about tuning** in the [TUNNING.md file](./TUNING.MD)
 
 
-#### JDK 1.7
+### JDK 1.7
 
 **Solr-undertow requires JDK 1.7 or newer**.  Do not run Solr on anything older, it isn't worth the pain of inferior garbage collectors.  Oracle JDK is also prefered, Open JDK does not perform as well and at times has been incompatible.  
 
-#### Solr Distributions
+### Solr Distributions
 
 Quick links to common Solr distributions:
 
@@ -119,7 +119,7 @@ The smallest distribution is the WAR file, which you can create, or you can remo
 
 **For Solr 5.x and 6.x you download full distributions** from the main [Solr website](http://lucene.apache.org/solr/) or from the [past version archives](http://archive.apache.org/dist/lucene/solr/).   
 
-#### Custom JVM Parameters
+### Custom JVM Parameters
 
 **To set additional Java startup parameters** for the VM, you can set the `SOLR_UNDERTOW_OPTS` environment variable before running, for example:
 
@@ -140,7 +140,7 @@ export SOLR_UNDERTOW_OPTS="-Dsolr.undertow.httpClusterPort=8080 -Dsolr.undertow.
 ../bin/solr-undertow example.conf
 ```
 
-#### Logging
+### Logging
 
 **Logging is via Slf4j routing to _LogBack_** and can be configured differently than the [default](src/main/resources/logback.xml) by providing a [custom configuration file](http://logback.qos.ch/manual/configuration.html) pointed to by the system property `logback.configurationFile`. 
 
@@ -198,11 +198,11 @@ You can also specify either of these prebuilt formats instead of using macros, a
 |common|`%h %l %u %t "%r" %s %b`|
 |combined|`%h %l %u %t "%r" %s %b "%{i,Referer}" "%{i,User-Agent}"`|
 
-#### HTTP IO and Worker threads
+### HTTP IO and Worker threads
 
 **see also:** [Tuning Solr-Undertow](./TUNING.MD)
 
-#### Scripting Startup / Shutdown
+### Scripting Startup / Shutdown
 
 Solr-Undertow listens on the configured shutdown HTTP port (defaults to 9983) for a GET request, single parameter of `password` which must be set to a value matching the configured password.
 
@@ -217,12 +217,12 @@ curl -X GET http://localhost:9983?password=diediedie
 A user created example of scripting can be seen in a [GIST from @magicdude4eva](https://gist.github.com/magicdude4eva/3b5fec150fbcaafdc34c) where the stop script properly checks exit codes, and does a kill command against the `PID` if the graceful shutdown request fails.
 
 
-#### Usage as an embedded library
+### Usage as an embedded library
 
 Solr-Undertow can be embedded in any JVM app.  Include the dependency:
 
 ```
-uy.kohesive.solr:solr-undertow:1.6.0-RC-1
+uy.kohesive.solr:solr-undertow:1.6.1
 ```
 
 Then use the App (has `main()` static method) or Server class (more control of configuration) to start the process.
