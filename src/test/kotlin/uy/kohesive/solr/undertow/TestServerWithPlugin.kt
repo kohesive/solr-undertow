@@ -180,5 +180,12 @@ class NothingQuery : ExtendedQueryBase(), PostFilter {
         }
     }
 
+    override fun equals(other: Any?): Boolean {
+        return other is NothingQuery
+    }
+
+    override fun hashCode(): Int {
+        return 999
+    }
 }
 
