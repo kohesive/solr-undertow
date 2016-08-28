@@ -20,7 +20,7 @@ buildscript {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.10'
+    gradleVersion = '2.14'
 }
 
 apply plugin: 'java'
@@ -210,8 +210,8 @@ nexus {
 }
 
 bintray {
-    user = "$bintrayUser"
-    key = "$bintrayKey"
+    user = project.hasProperty('bintrayUser') ? bintrayUser : ''
+    key = project.hasProperty('bintrayKey') ? bintrayKey : ''
     pkg {
         repo = 'kohesive'
         name = project.name
