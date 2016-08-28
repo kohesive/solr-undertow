@@ -13,13 +13,13 @@ Releases [are available on GitHub](https://github.com/kohesive/solr-undertow/rel
 
 ### Usage
 
-Usage is simple, you only need a configuration file and a [Solr distribution](https://github.com/kohesive/solr-undertow/blob/master/README.md#solr-distributions):
+Usage is simple, you only need [Solr-Undertow release](https://github.com/kohesive/solr-undertow/releases), a configuration file and a [Solr distribution](https://github.com/kohesive/solr-undertow/blob/master/README.md#solr-distributions):
 
 ```sh
 bin/solr-undertow <configurationFile>
 ```
 
-You can run the included example configuration + Solr (from the release that includes each Solr version) using:
+Solr-Undertow releases include example configuration files, for example using the default configuration:
 
 ```sh
 bin/solr-undertow example/example.conf
