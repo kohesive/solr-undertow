@@ -427,7 +427,7 @@ class TestConfigLoading {
 
         val cfg = makeConfig(cfgHocon)
         val cfgFile = cfg.loader.workingDir
-        fun String.toCfgDir(): Path = cfgFile.resolve(this).toAbsolutePath()
+        fun String.toCfgDir(): Path = cfgFile.resolve(this).toAbsolutePath().normalize()
 
         assertEquals(testHome.toCfgDir(), cfg.solrHome)
         assertEquals(testLogs.toCfgDir(), cfg.solrLogs)

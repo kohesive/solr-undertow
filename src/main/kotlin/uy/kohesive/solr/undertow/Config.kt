@@ -20,6 +20,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import uy.klutter.config.typesafe.*
 import uy.klutter.config.typesafe.jdk7.FileConfig
+import uy.klutter.config.typesafe.jdk7.asPathList
 import uy.klutter.config.typesafe.jdk7.asPathRelative
 import uy.klutter.core.common.initializedBy
 import uy.klutter.core.jdk.minimum
@@ -109,7 +110,7 @@ abstract class ServerConfigReplicatedToSysProps: ServerConfigLoader {
             if (configValue.exists()) {
                 if (configValue.isNotEmptyString()) {
                     val value = if (SYS_PROPERTIES_THAT_ARE_PATHS.contains(mapping.key)) {
-                        configValue.asPathRelative(workingDir).toString()
+                        configValue.asPathRelative(workingDir).normalize().toString()
                     }
                     else {
                         configValue.asString()
@@ -200,17 +201,19 @@ class ServerConfig(private val log: Logger, val loader: ServerConfigLoader) {
     }
     val zkRun = configured.value(OUR_PROP_ZKRUN).asBoolean()
     val zkHost = configured.value(OUR_PROP_ZKHOST).asString()
-    val solrHome = configured.value(OUR_PROP_SOLR_HOME).asPathRelative(loader.workingDir)
-    val solrLogs = configured.value(OUR_PROP_SOLR_LOG).asPathRelative(loader.workingDir)
-    val tempDir = configured.value(OUR_PROP_TEMP_DIR).asPathRelative(loader.workingDir)
+    val solrHome = configured.value(OUR_PROP_SOLR_HOME).asPathRelative(loader.workingDir).normalize()
+    val solrLogs = configured.value(OUR_PROP_SOLR_LOG).asPathRelative(loader.workingDir).normalize()
+    val tempDir = configured.value(OUR_PROP_TEMP_DIR).asPathRelative(loader.workingDir).normalize()
+    val tempDirSymLinksAllow = configured.value("tempDirSymLinksAllow").asBoolean(false)
+    val tempDirSymLinksSafePaths = configured.value("tempDirSymLinksSafePaths").asPathList().map(Path::normalize)
     val solrVersion = configured.value(OUR_PROP_SOLR_VERSION).asString()
 
     private val solrWarFileString = configured.value(OUR_PROP_SOLR_WAR).asStringOrNull().nullIfEmpty()
-    val solrWarFile: Path? = solrWarFileString?.let { loader.workingDir.resolve(solrWarFileString) }
+    val solrWarFile: Path? = solrWarFileString?.let { loader.workingDir.resolve(solrWarFileString).normalize() }
     val solrWarCanBeOmitted = configured.value(OUR_PROP_SOLR_WAR_ALLOW_OMIT).asBoolean(false)
 
     private val libExtDirString = configured.value(OUR_PROP_LIBEXT_DIR).asStringOrNull().nullIfEmpty()
-    val libExtDir: Path? = libExtDirString?.let { loader.workingDir.resolve(libExtDirString) }
+    val libExtDir: Path? = libExtDirString?.let { loader.workingDir.resolve(libExtDirString).normalize() }
 
     val solrContextPath = configured.value(OUR_PROP_HOST_CONTEXT).asString().let { solrContextPath ->
         if (!solrContextPath.startsWith("/")) "/" + solrContextPath else solrContextPath

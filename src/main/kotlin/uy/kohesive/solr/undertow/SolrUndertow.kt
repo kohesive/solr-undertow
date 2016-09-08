@@ -400,7 +400,8 @@ class Server(cfgLoader: ServerConfigLoader) {
                 .addMimeMapping(MimeMapping(".xsl", "application/xslt+xml"))
                 .addWelcomePages(welcomePages)
         solrWarDeployment.htmlDir?.let { htmlDir ->
-            deployment.setResourceManager(FileResourceManager(solrWarDeployment.htmlDir.toFile(), 1024))
+            deployment.setResourceManager(FileResourceManager(solrWarDeployment.htmlDir.toFile(), 1024L,
+                    cfg.tempDirSymLinksAllow, *cfg.tempDirSymLinksSafePaths.map(Path::toString).toTypedArray()))
         }
 
         if (solrRestConfigApiClass != null) {
