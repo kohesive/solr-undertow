@@ -43,7 +43,7 @@ solr.undertow: {
 
 In this configuration `solrHome` must contain at minimum `solr.xml` (and `zoo.cfg` if SolrCloud) and any pre-configured cores.
 
-The defaults, and all configuration options can be seen in the [configuration defaults file](src/main/resources/reference.conf).  Which include `httpClusterPort: 8983`, the default server port.
+The defaults, and all configuration options can be seen in the [configuration defaults file](src/main/resources/solr-undertow-reference.conf).  Which include `httpClusterPort: 8983`, the default server port.
 
 Configured directories are validated at startup to give clear error messages, they are checked for existance and readable/writeable attributes (depending on the directory).
 
@@ -147,7 +147,7 @@ Solr-Undertow writes the following log files:
 |---|---|
 |solr*.log|Java logging, including Solr internal logging|
 |error*.log|Java logging, only log messages with level ERROR or above|
-|access*.log|HTTP access logging, see [configuration defaults](src/main/resources/reference.conf) for more information on format| 
+|access*.log|HTTP access logging, see [configuration defaults](src/main/resources/solr-undertow-reference.conf) for more information on format| 
 
 The default access log format is:
 `%t %a %p \"%r\" %q %s %b %Dms %{o,X-Solr-QTime} ${o,X-Solr-Hits}`
@@ -203,7 +203,7 @@ You can also specify either of these prebuilt formats instead of using macros, a
 
 Solr-Undertow listens on the configured shutdown HTTP port (defaults to 9983) for a GET request, single parameter of `password` which must be set to a value matching the configured password.
 
-If the a shutdown password is not configured then a 403 forbidden error will be returned.  If the password does not match, a 401 unauthorized error will be return.  Otherwise on success a 200 HTTP response, and on timeout or other error a 500 HTTP response (although the VM will still exit).  See the [configuration defaults file](src/main/resources/reference.conf) for the `shutdown` section.
+If the a shutdown password is not configured then a 403 forbidden error will be returned.  If the password does not match, a 401 unauthorized error will be return.  Otherwise on success a 200 HTTP response, and on timeout or other error a 500 HTTP response (although the VM will still exit).  See the [configuration defaults file](src/main/resources/solr-undertow-reference.conf) for the `shutdown` section.
 
 An example of sending a shutdown command when port is configured as `9983` and password is `diediedie` (please use a better password than that!)
 
