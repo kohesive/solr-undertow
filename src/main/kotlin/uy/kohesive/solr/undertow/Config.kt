@@ -23,6 +23,7 @@ import uy.klutter.config.typesafe.jdk7.FileConfig
 import uy.klutter.config.typesafe.jdk7.asPathList
 import uy.klutter.config.typesafe.jdk7.asPathRelative
 import uy.klutter.core.common.initializedBy
+import uy.klutter.core.jdk.maximum
 import uy.klutter.core.jdk.minimum
 import uy.klutter.core.jdk.nullIfEmpty
 import uy.klutter.core.jdk7.notExists
@@ -337,6 +338,10 @@ class RequestLimitConfig(private val log: Logger, val name: String, private val 
     val concurrentRequestLimit = cfg.value("concurrentRequestLimit").asInt().minimum(-1)
     val maxQueuedRequestLimit = cfg.value("maxQueuedRequestLimit").asInt().minimum(-1)
 
+    val maxReqPerSecond = cfg.value("maxReqPerSecond").asIntOrNull()?.minimum(-1) ?: -1
+    val throttledReqPerSecondMinPauseMillis =  cfg.value("throttledReqPerSecondMinPauseMillis").asIntOrNull()?.minimum(0) ?: 0
+    val throttledReqPerSecondMaxPauseMillis =  cfg.value("throttledReqPerSecondMaxPauseMillis").asIntOrNull()?.minimum(0) ?: 0
+    val overLimitReqPerSecondHttpErrorCode =  cfg.value("overLimitReqPerSecondHttpErrorCode").asIntOrNull()?.minimum(300)?.maximum(999) ?: 503
 
     fun validate(): Boolean {
         if (exactPaths.isEmpty() && pathSuffixes.isEmpty()) {
@@ -348,10 +353,14 @@ class RequestLimitConfig(private val log: Logger, val name: String, private val 
 
     fun print() {
         log.info("  ${name} >>")
-        log.info("    exactPaths: ${exactPaths.joinToString(",")}")
-        log.info("    pathSuffixes: ${pathSuffixes.joinToString(",")}")
-        log.info("    concurrentRequestLimit: ${if (concurrentRequestLimit < 0) "unlimited" else concurrentRequestLimit.minimum(1).toString() }")
-        log.info("    maxQueuedRequestLimit: ${if (maxQueuedRequestLimit < 0) "unlimited" else maxQueuedRequestLimit.toString() }")
+        log.info("    exactPaths:                           ${exactPaths.joinToString(",")}")
+        log.info("    pathSuffixes:                         ${pathSuffixes.joinToString(",")}")
+        log.info("    concurrentRequestLimit:               ${if (concurrentRequestLimit < 0) "unlimited" else concurrentRequestLimit.minimum(1).toString() }")
+        log.info("    maxQueuedRequestLimit:                ${if (maxQueuedRequestLimit < 0) "unlimited" else maxQueuedRequestLimit.toString() }")
+        log.info("    maxReqPerSecond:                      ${if (maxReqPerSecond <= 0) "unlimited" else maxReqPerSecond.toString() }")
+        log.info("    throttledReqPerSecondMinPauseMillis:  ${if (throttledReqPerSecondMinPauseMillis <= 0) "no pause" else throttledReqPerSecondMinPauseMillis.toString() }")
+        log.info("    throttledReqPerSecondMaxPauseMillis:  ${if (throttledReqPerSecondMaxPauseMillis <= 0) "no pause" else throttledReqPerSecondMaxPauseMillis.toString() }")
+        log.info("    overLimitReqPerSecondHttpErrorCode:   ${overLimitReqPerSecondHttpErrorCode}")
     }
 }
 

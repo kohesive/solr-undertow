@@ -152,6 +152,8 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:${version_kotlin}"
     compile "org.jetbrains.kotlin:kotlin-reflect:${version_kotlin}"
 
+    compile "com.google.guava:guava:${version_guava}"
+
     compile "org.slf4j:slf4j-api:${version_slf4j}"
     runtime "ch.qos.logback:logback-classic:${version_logback}"
     runtime "ch.qos.logback:logback-access:${version_logback}"
@@ -164,6 +166,7 @@ dependencies {
 
     testCompile "junit:junit:${version_junit}"
     testCompile "org.jetbrains.kotlin:kotlin-test:${version_kotlin}"
+    testCompile "nl.komponents.kovenant:kovenant:${version_kovenant}"
 
     // test cases might use Solr
     testCompile "org.apache.solr:solr-solrj:${version_solr}"

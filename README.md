@@ -52,7 +52,7 @@ Configured directories are validated at startup to give clear error messages, th
 Two example configurations are provided in the [example directory](example/):
 
 * [Basic configuration](example/example.conf)
-* [Configuration with request limitting](example/example-ratelimited.conf) (max concurrent requests + max queued requests)
+* [Configuration with request limitting](example/example-ratelimited.conf) (max concurrent requests, max queued requests, and max requests per second)
 
 ### System and Environment Properties
 

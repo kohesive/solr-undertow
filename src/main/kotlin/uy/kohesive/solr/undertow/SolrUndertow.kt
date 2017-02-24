@@ -452,13 +452,30 @@ class Server(cfgLoader: ServerConfigLoader) {
         private fun hasExactPaths(): Boolean = rlCfg.exactPaths.isNotEmpty()
         private fun hasSuffixes(): Boolean = rlCfg.pathSuffixes.isNotEmpty()
 
+        private fun rpsLimitWrappedHanlder(handlerToRateLimit: HttpHandler): HttpHandler {
+            return  if (rlCfg.maxReqPerSecond <= 0) {
+                handlerToRateLimit
+            }else {
+                RequestPerSecondRateLimiter(rlCfg.maxReqPerSecond.toLong(), handlerToRateLimit,
+                        minPauseOnBusyMillis = rlCfg.throttledReqPerSecondMinPauseMillis.toLong(),
+                        maxPauseOnBusyMillis = rlCfg.throttledReqPerSecondMaxPauseMillis.toLong(),
+                        httpCodeWhenBusy = rlCfg.overLimitReqPerSecondHttpErrorCode)
+            }
+        }
+
         fun nestHandlerInsideRateLimitingBySuffixHandler(handlerToNest: HttpHandler, handlerToRateLimit: HttpHandler): HttpHandler {
-            return if (hasSuffixes()) Handlers.predicate(suffixPredicate, Handlers.requestLimitingHandler(requestLimit, handlerToRateLimit), handlerToNest)
+            return if (hasSuffixes()) {
+                val innerHandler = rpsLimitWrappedHanlder(handlerToRateLimit)
+                Handlers.predicate(suffixPredicate, Handlers.requestLimitingHandler(requestLimit, innerHandler), handlerToNest)
+            }
             else handlerToNest
         }
 
         fun nestHandlerInsideRateLimitingByExactHandler(handlerToNest: HttpHandler, handlerToRateLimit: HttpHandler): HttpHandler {
-            return if (hasExactPaths()) Handlers.predicate(exactPredicate, Handlers.requestLimitingHandler(requestLimit, handlerToRateLimit), handlerToNest)
+            return if (hasExactPaths()) {
+                val innerHandler = rpsLimitWrappedHanlder(handlerToRateLimit)
+                Handlers.predicate(exactPredicate, Handlers.requestLimitingHandler(requestLimit, innerHandler), handlerToNest)
+            }
             else handlerToNest
         }
     }
