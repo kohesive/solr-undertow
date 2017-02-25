@@ -11,6 +11,8 @@ import nl.komponents.kovenant.buildDispatcher
 import nl.komponents.kovenant.task
 import org.junit.Ignore
 import org.junit.Test
+import uy.klutter.core.jdk.maximum
+import uy.klutter.core.jdk.minimum
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -47,7 +49,8 @@ class TestRequestPerSecondRateLimiter {
         val maxRps = 10L
         val msPerRequest = (1000L / maxRps).coerceAtLeast(1L).coerceAtMost(1000L)
         val minPauseOnBusyMillis = 10L
-        val maxPauseOnBusyMillis = 25L
+        val numSlotsToHopeForInFuture = 2
+        val maxPauseOnBusyMillis = 25L // (msPerRequest * numSlotsToHopeForInFuture).minimum(minPauseOnBusyMillis).maximum(500L)
 
         val delayMultiple = 3
         val msSimPause = msPerRequest * delayMultiple // (msPerRequest / 2).toLong()
