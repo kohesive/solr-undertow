@@ -11,8 +11,6 @@ import nl.komponents.kovenant.buildDispatcher
 import nl.komponents.kovenant.task
 import org.junit.Ignore
 import org.junit.Test
-import uy.klutter.core.jdk.maximum
-import uy.klutter.core.jdk.minimum
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL

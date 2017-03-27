@@ -28,9 +28,9 @@ import org.apache.solr.search.*
 import org.junit.*
 import org.slf4j.LoggerFactory
 import uy.klutter.config.typesafe.render
+import uy.klutter.core.common.deleteRecursively
+import uy.klutter.core.common.exists
 import uy.klutter.core.common.verifiedBy
-import uy.klutter.core.jdk7.deleteRecursively
-import uy.klutter.core.jdk7.exists
 import uy.kohesive.solr.undertow.*
 import java.nio.file.Files
 import java.nio.file.Paths
