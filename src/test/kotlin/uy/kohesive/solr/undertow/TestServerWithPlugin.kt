@@ -115,7 +115,8 @@ class TestServerWithPlugin {
         }
     }
 
-    val adminClient: SolrClient = HttpSolrClient("http://localhost:8983/solr/")
+    val adminClient: SolrClient = HttpSolrClient.Builder("http://localhost:8983/solr/")
+        .build()
 
     @Before fun prepareTest() {
         // anything before each test?

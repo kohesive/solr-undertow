@@ -3,7 +3,7 @@ solr-undertow
 
 [![CircleCI branch](https://img.shields.io/circleci/project/kohesive/solr-undertow/master.svg)](https://circleci.com/gh/kohesive/solr-undertow/tree/master) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/kohesive/solr-undertow/blob/master/LICENSE.txt) [![Kotlin](https://img.shields.io/badge/kotlin-1.2.21-blue.svg)](http://kotlinlang.org)
 
-[Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.x, 5.x, and 6.x.  Less than 10MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
+[Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.x, 5.x, 6.x, and 7.x.  Less than 10MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
 
 This application launches a Solr distribution as a standalone server running a high performance HTTP front-end based on [undertow.io](http://undertow.io) (the engine behind WildFly, the new JBoss).  It has no features of an application server, does nothing more than load Solr servlets and also service the Admin UI.  It is production-quality for a stand-alone Solr server.
 
@@ -36,7 +36,7 @@ solr.undertow: {
   solrHome: "./solr-home"
   solrLogs: "./solr-logs"
   tempDir: "./solr-temp"
-  solrVersion: "6.6.2"
+  solrVersion: "7.2.1"
   solrWarFile: ./solr-wars/solr-${solr.undertow.solrVersion}.zip
 }
 ```
@@ -102,6 +102,10 @@ Quick links to common Solr distributions:
 |6.0.1|http://archive.apache.org/dist/lucene/solr/6.0.1/solr-6.0.1.zip|
 |6.1.0|http://archive.apache.org/dist/lucene/solr/6.1.0/solr-6.1.0.zip|
 |6.2.0|http://archive.apache.org/dist/lucene/solr/6.2.0/solr-6.2.0.zip|
+|6.4.2|http://archive.apache.org/dist/lucene/solr/6.4.2/solr-6.4.2.zip|
+|6.6.2|http://archive.apache.org/dist/lucene/solr/6.6.2/solr-6.6.2.zip|
+|7.2.1|http://archive.apache.org/dist/lucene/solr/7.2.1/solr-7.2.1.zip|
+
 
 Solr-Undertow supports the following patterns of distribuions:
 
