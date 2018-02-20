@@ -4,8 +4,7 @@ import com.google.common.util.concurrent.RateLimiter
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.handlers.ResponseCodeHandler
-import uy.klutter.core.jdk.maximum
-import uy.klutter.core.jdk.minimum
+import uy.klutter.core.common.minimum
 import java.util.concurrent.TimeUnit
 
 class RequestPerSecondRateLimiter(val maxRPS: Long,

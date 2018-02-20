@@ -15,8 +15,8 @@
 
 package uy.kohesive.solr.undertow
 
+import uy.klutter.core.common.notExists
 import uy.klutter.core.common.verifiedBy
-import uy.klutter.core.jdk7.notExists
 import java.nio.file.Paths
 
 class App {
@@ -28,8 +28,7 @@ class App {
             }
 
             try {
-                if (args.toList().size != 1) {
-                    // TODO: go back to args.size after next Kotlin release (> 0.9.206) because the plugin stdlibrary doesn't match my used standard library
+                if (args.size != 1) {
                     printErrorAndExit("A Configuration file must be passed on the command-line (i.e. /my/path/to/solr-undertow.conf)")
                 }
                 val configFile = Paths.get(args[0]).toAbsolutePath() verifiedBy { path ->

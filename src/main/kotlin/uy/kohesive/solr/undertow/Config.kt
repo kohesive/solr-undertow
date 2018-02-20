@@ -19,14 +19,10 @@ import com.typesafe.config.Config
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import uy.klutter.config.typesafe.*
-import uy.klutter.config.typesafe.jdk7.FileConfig
-import uy.klutter.config.typesafe.jdk7.asPathList
-import uy.klutter.config.typesafe.jdk7.asPathRelative
-import uy.klutter.core.common.initializedBy
-import uy.klutter.core.jdk.maximum
-import uy.klutter.core.jdk.minimum
-import uy.klutter.core.jdk.nullIfEmpty
-import uy.klutter.core.jdk7.notExists
+import uy.klutter.core.common.maximum
+import uy.klutter.core.common.minimum
+import uy.klutter.core.common.notExists
+import uy.klutter.core.common.nullIfEmpty
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -144,7 +140,7 @@ class ServerConfigLoaderFromFileAndSolrEnvironment(private val configFile: Path)
     // No configuration variables are resolved until the end, so a variable can be used in a lower level, and fulfilled
     // by a higher.
     override val resolvedConfig = loadConfig(PropertiesAsConfig(readRelevantProperties(SERVER_ENV_PROXY.sysPropertiesAsMap())),
-                                    FileConfig(configFile),
+                                    PathConfig(configFile),
                                     PropertiesAsConfig(readRelevantProperties(SERVER_ENV_PROXY.envPropertiesAsMap())),
                                     referenceConfigLoader) then { config ->
         writeRelevantSystemProperties(config)
@@ -194,7 +190,7 @@ class ServerConfig(private val log: Logger, val loader: ServerConfigLoader) {
     val shutdownConfig = ShutdownConfig(log, configured.nested("shutdown"))
 
     val activeRequestLimits = configured.value("activeRequestLimits").asStringArray()
-    val requestLimiters = HashMap<String, RequestLimitConfig>() initializedBy { requestLimiters ->
+    val requestLimiters = HashMap<String, RequestLimitConfig>().also { requestLimiters ->
         val namedConfigs = configured.nested("requestLimits")
         activeRequestLimits.forEach { name ->
             requestLimiters.put(name, RequestLimitConfig(log, name, namedConfigs.getConfig(name)!!))

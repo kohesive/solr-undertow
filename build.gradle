@@ -6,11 +6,6 @@ buildscript {
         maven {
             url 'http://oss.sonatype.org/content/repositories/snapshots'
         }
-        /*
-        maven {
-            url 'http://dl.bintray.com/kotlin/kotlin-eap'
-        }
-        */
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${version_kotlin}"
@@ -20,7 +15,7 @@ buildscript {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.14'
+    gradleVersion = '4.5.1'
 }
 
 apply plugin: 'java'
@@ -37,10 +32,24 @@ applicationDefaultJvmArgs = ["-Dfile.encoding=UTF-8"]
 // set other parameters in SOLR_UNDERTOW_OPTS environment variable, for example:
 // export SOLR_UNDERTOW_OPTS="-Xms15G -Xmx15G -XX:MaxPermSize=512m -XX:PermSize=256m -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9901 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false
 
-sourceCompatibility = JavaVersion.VERSION_1_7
-targetCompatibility = JavaVersion.VERSION_1_7
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
-tasks.withType(Tar){
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = 1.8
+        languageVersion = 1.2
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = 1.8
+        languageVersion = 1.2
+    }
+}
+
+tasks.withType(Tar) {
     compression = Compression.GZIP
 }
 
@@ -128,14 +137,6 @@ repositories {
     maven {
         url 'http://oss.sonatype.org/content/repositories/snapshots'
     }
-    /*
-    maven {
-        url 'http://dl.bintray.com/kotlin/kotlin-eap'
-    }
-    */
-    maven {
-        url 'http://dl.bintray.com/jaysonminard/kohesive'
-    }
     // if ever compile against Solr 4.10.4 it needs this
     maven {
         url 'https://maven.restlet.com'
@@ -145,11 +146,11 @@ repositories {
 dependencies {
     compile "io.undertow:undertow-servlet:${version_undertow}"
 
-    compile "uy.klutter:klutter-core-jdk7:${version_klutter}"
-    compile "uy.klutter:klutter-config-typesafe-jdk7:${version_klutter}"
+    compile "uy.kohesive.klutter:klutter-core:${version_klutter}"
+    compile "uy.kohesive.klutter:klutter-config-typesafe:${version_klutter}"
     compile "com.typesafe:config:${version_typesafe_config}"
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib:${version_kotlin}"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:${version_kotlin}"
     compile "org.jetbrains.kotlin:kotlin-reflect:${version_kotlin}"
 
     compile "com.google.guava:guava:${version_guava}"
@@ -171,8 +172,8 @@ dependencies {
     // test cases might use Solr
     testCompile "org.apache.solr:solr-solrj:${version_solr}"
     testCompile("org.apache.solr:solr-core:${version_solr}") {
-        exclude group:"org.eclipse.jetty"
-        exclude group:"org.eclipse.jetty.orbit"
+        exclude group: "org.eclipse.jetty"
+        exclude group: "org.eclipse.jetty.orbit"
     }
 }
 
