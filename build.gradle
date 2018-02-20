@@ -150,7 +150,7 @@ dependencies {
     compile "uy.kohesive.klutter:klutter-config-typesafe:${version_klutter}"
     compile "com.typesafe:config:${version_typesafe_config}"
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:${version_kotlin}"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version_kotlin}"
     compile "org.jetbrains.kotlin:kotlin-reflect:${version_kotlin}"
 
     compile "com.google.guava:guava:${version_guava}"
