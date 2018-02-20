@@ -1,7 +1,7 @@
 Tuning Solr-Undertow
 ====================
 
-There are not many tunable paremeters, mostly the IO and Worker threads, the JDK Gabage Collection, the Directory implementation used by Solr, and JMV Heap Sizes.
+There are not many tunable paremeters, mostly the IO and Worker threads, the JDK Garbage Collection, the Directory implementation used by Solr, and JMV Heap Sizes.
 
 #### Java Garbage Collection
 
@@ -35,6 +35,6 @@ Check `NRTCachingDirectoryFactory` vs `MMapDirectoryFactory` vs `NIOFSDirectoryF
 
 #### Other Tuning
 
-Check your queries that they are sufficiently cacheable, and that your cache eviction rates are not too high.  
+Check that your queries are sufficiently cacheable, and that your cache eviction rates are not too high.  
 
 Disk/Network load and JVM GC are other factors that will pull down performance. Monitor with JConsole, YourKit, VisualVM, New Relic, or some other monitoring software.  _Test to find your own answer._  
