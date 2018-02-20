@@ -15,7 +15,7 @@ buildscript {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.4.1'
+    gradleVersion = '4.5.1'
 }
 
 apply plugin: 'java'
@@ -38,14 +38,14 @@ targetCompatibility = JavaVersion.VERSION_1_8
 compileKotlin {
     kotlinOptions {
         jvmTarget = 1.8
-        languageVersion = 1.1
+        languageVersion = 1.2
     }
 }
 
 compileTestKotlin {
     kotlinOptions {
         jvmTarget = 1.8
-        languageVersion = 1.1
+        languageVersion = 1.2
     }
 }
 
