@@ -242,7 +242,12 @@ and the resulting binaries will be under `./build/distributions` as `.tgz` and `
 
 Open the `build.gradle` file as a project, accept the default Gradle wrapper, and then fixup JDK to be 1.7 or newer.  Be sure you have Kotlin plugin installed and that it matches the version in the Gradle build or newer, check the [gradle.properties file](./gradle.properties) for Kotlin version number.
 
+## Special Thanks
 
+YourKit supports open source projects with its full-featured Java Profiler.
+YourKit, LLC is the creator of [YourKit Java Profiler](https://www.yourkit.com/java/profiler/)
+and [YourKit .NET Profiler](https://www.yourkit.com/.net/profiler/),
+innovative and intelligent tools for profiling Java and .NET applications.
 
 
 
