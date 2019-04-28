@@ -22,6 +22,7 @@ import io.undertow.predicate.Predicates
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.server.handlers.GracefulShutdownHandler
+import io.undertow.server.handlers.encoding.EncodingHandler
 import io.undertow.server.handlers.RequestLimit
 import io.undertow.server.handlers.accesslog.AccessLogHandler
 import io.undertow.server.handlers.accesslog.AccessLogReceiver
@@ -438,7 +439,13 @@ class Server(cfgLoader: ServerConfigLoader) {
         val redirectToAdmin = if (isSolr6) "index.html" else "admin.html"
         val oldAdminUiFixer = Handlers.path(pathHandler).addExactPath(cfg.solrContextPath, Handlers.redirect(cfg.solrContextPath.mustEndWith('/')+redirectToAdmin))
 
-        return ServletDeploymentAndHandler(servletDeploymentMgr, oldAdminUiFixer)
+        if (cfg.httpCompression) {
+            val encodingHandler = EncodingHandler.Builder().build(null).wrap(oldAdminUiFixer)
+            return ServletDeploymentAndHandler(servletDeploymentMgr, encodingHandler)
+        }
+        else {
+            return ServletDeploymentAndHandler(servletDeploymentMgr, oldAdminUiFixer)
+        }
     }
 
     private class RequestLimitHelper(private val rlCfg: RequestLimitConfig) {
