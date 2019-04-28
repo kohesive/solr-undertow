@@ -439,9 +439,13 @@ class Server(cfgLoader: ServerConfigLoader) {
         val redirectToAdmin = if (isSolr6) "index.html" else "admin.html"
         val oldAdminUiFixer = Handlers.path(pathHandler).addExactPath(cfg.solrContextPath, Handlers.redirect(cfg.solrContextPath.mustEndWith('/')+redirectToAdmin))
 
-        val encodingHandler = EncodingHandler.Builder().build(null).wrap(oldAdminUiFixer)
-
-        return ServletDeploymentAndHandler(servletDeploymentMgr, encodingHandler)
+        if (cfg.httpCompression) {
+            val encodingHandler = EncodingHandler.Builder().build(null).wrap(oldAdminUiFixer)
+            return ServletDeploymentAndHandler(servletDeploymentMgr, encodingHandler)
+        }
+        else {
+            return ServletDeploymentAndHandler(servletDeploymentMgr, oldAdminUiFixer)
+        }
     }
 
     private class RequestLimitHelper(private val rlCfg: RequestLimitConfig) {

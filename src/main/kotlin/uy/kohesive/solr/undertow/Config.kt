@@ -60,6 +60,7 @@ val OUR_PROP_SOLR_WAR_ALLOW_OMIT = "solrWarCanBeOmitted"
 val OUR_PROP_SOLR_VERSION = "solrVersion"
 val OUR_PROP_TEMP_DIR = "tempDir"
 val OUR_PROP_LIBEXT_DIR = "libExtDir"
+val OUR_PROP_HTTP_COMPRESSION = "httpCompression"
 
 
 // system and environment variables that need to be treated the same as our configuration items
@@ -204,6 +205,7 @@ class ServerConfig(private val log: Logger, val loader: ServerConfigLoader) {
     val tempDirSymLinksAllow = configured.value("tempDirSymLinksAllow").asBoolean(false)
     val tempDirSymLinksSafePaths = configured.value("tempDirSymLinksSafePaths").asPathList().map(Path::normalize)
     val solrVersion = configured.value(OUR_PROP_SOLR_VERSION).asString()
+    val httpCompression = configured.value(OUR_PROP_HTTP_COMPRESSION).asBoolean(false);
 
     private val solrWarFileString = configured.value(OUR_PROP_SOLR_WAR).asStringOrNull().nullIfEmpty()
     val solrWarFile: Path? = solrWarFileString?.let { loader.workingDir.resolve(solrWarFileString).normalize() }
@@ -240,6 +242,7 @@ class ServerConfig(private val log: Logger, val loader: ServerConfigLoader) {
         printS(ServerConfig::httpHost)
         printI(ServerConfig::httpIoThreads, 0)
         printI(ServerConfig::httpWorkerThreads, 0)
+        printB(ServerConfig::httpCompression)
 
         printSA(ServerConfig::activeRequestLimits)
 
