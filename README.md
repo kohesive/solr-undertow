@@ -1,7 +1,7 @@
 solr-undertow
 =============
 
-[![GitHub release](https://img.shields.io/github/release/kohesive/solr-undertow.svg)](https://github.com/kohesive/solr-undertow/releases) [![Maven Central](https://img.shields.io/maven-central/v/uy.kohesive.solr/solr-undertow.svg)](https://mvnrepository.com/artifact/uy.kohesive.solr) [![CircleCI branch](https://img.shields.io/circleci/project/kohesive/solr-undertow/master.svg)](https://circleci.com/gh/kohesive/solr-undertow/tree/master) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/kohesive/solr-undertow/blob/master/LICENSE.txt)  [![Solr](https://img.shields.io/badge/solr-4.x-orange.svg)](http://lucene.apache.org/solr/) [![Solr](https://img.shields.io/badge/solr-5.x-orange.svg)](http://lucene.apache.org/solr/) [![Solr](https://img.shields.io/badge/solr-6.x-orange.svg)](http://lucene.apache.org/solr/) [![Solr](https://img.shields.io/badge/solr-7.x-orange.svg)](http://lucene.apache.org/solr/) [![Kotlin](https://img.shields.io/badge/kotlin-1.2.21-blue.svg)](http://kotlinlang.org)
+[![GitHub release](https://img.shields.io/github/release/kohesive/solr-undertow.svg)](https://github.com/kohesive/solr-undertow/releases) [![Maven Central](https://img.shields.io/maven-central/v/uy.kohesive.solr/solr-undertow.svg)](https://mvnrepository.com/artifact/uy.kohesive.solr) [![CircleCI branch](https://img.shields.io/circleci/project/kohesive/solr-undertow/master.svg)](https://circleci.com/gh/kohesive/solr-undertow/tree/master) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/kohesive/solr-undertow/blob/master/LICENSE.txt)  [![Solr](https://img.shields.io/badge/solr-4.x-orange.svg)](http://lucene.apache.org/solr/) [![Solr](https://img.shields.io/badge/solr-5.x-orange.svg)](http://lucene.apache.org/solr/) [![Solr](https://img.shields.io/badge/solr-6.x-orange.svg)](http://lucene.apache.org/solr/) [![Solr](https://img.shields.io/badge/solr-7.x-orange.svg)](http://lucene.apache.org/solr/) [![Solr](https://img.shields.io/badge/solr-8.x-orange.svg)](http://lucene.apache.org/solr/) [![Kotlin](https://img.shields.io/badge/kotlin-1.2.61-blue.svg)](http://kotlinlang.org)
 
 [Solr](http://lucene.apache.org/solr/) and SolrCloud running in high performance server - Tiny, fast, easy, standalone deployment, simple to configure, and without an application server.  Requires JDK 1.7 or newer, Solr 4.x, 5.x, 6.x, and 7.x.  Less than 10MB download, starts instantly, performs inline or better than all application servers.  Written in the [Kotlin language](http://kotlinlang.org) for the JVM (a better Java, not as complex as Scala).
 
@@ -36,7 +36,7 @@ solr.undertow: {
   solrHome: "./solr-home"
   solrLogs: "./solr-logs"
   tempDir: "./solr-temp"
-  solrVersion: "7.2.1"
+  solrVersion: "7.7.1"
   solrWarFile: ./solr-wars/solr-${solr.undertow.solrVersion}.zip
 }
 ```
@@ -105,7 +105,8 @@ Quick links to common Solr distributions:
 |6.4.2|http://archive.apache.org/dist/lucene/solr/6.4.2/solr-6.4.2.zip|
 |6.6.2|http://archive.apache.org/dist/lucene/solr/6.6.2/solr-6.6.2.zip|
 |7.2.1|http://archive.apache.org/dist/lucene/solr/7.2.1/solr-7.2.1.zip|
-
+|7.7.1|http://archive.apache.org/dist/lucene/solr/7.7.1/solr-7.7.1.zip|
+|8.0.0|http://archive.apache.org/dist/lucene/solr/8.0.0/solr-8.0.0.zip|
 
 Solr-Undertow supports the following patterns of distribuions:
 
@@ -118,7 +119,7 @@ The smallest distribution is the WAR file, which you can create, or you can remo
 
 **For Solr 4.x you can download Solr WAR files** from the Maven repository.  For example [Solr 4.10.4 WAR](http://central.maven.org/maven2/org/apache/solr/solr/4.10.4/solr-4.10.4.war) and [find older versions here](http://mvnrepository.com/artifact/org.apache.solr/solr).
 
-**For Solr 5.x and 6.x you download full distributions** from the main [Solr website](http://lucene.apache.org/solr/) or from the [past version archives](http://archive.apache.org/dist/lucene/solr/).   
+**For Solr 5.x, 6.x, 7.x, and 8.x you download full ZIP file distributions** from the main [Solr website](http://lucene.apache.org/solr/) or from the [past version archives](http://archive.apache.org/dist/lucene/solr/).   
 
 ### Custom JVM Parameters
 
