@@ -43,7 +43,10 @@ class TestServerWithPlugin {
     companion object {
         val workingDir = Paths.get("test-data/solr-standalone").toAbsolutePath()
         val solrVersion = SolrCore::class.java.`package`.specificationVersion
-        val coreWithPluginDir = if (solrVersion.substringBefore('.').toInt() >= 6) {
+        val solrMajorVersion = solrVersion.substringBefore('.').toInt()
+        val coreWithPluginDir = if (solrMajorVersion >= 8) {
+            workingDir.resolve("plugin-test/collection-solr8")
+        } else if (solrMajorVersion >= 6) {
             workingDir.resolve("plugin-test/collection-solr6")
         } else {
             workingDir.resolve("plugin-test/collection1")

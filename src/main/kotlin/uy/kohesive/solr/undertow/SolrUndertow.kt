@@ -216,7 +216,7 @@ class Server(cfgLoader: ServerConfigLoader) {
         val normalizedPathToDistribution = solrDistribution.normalize().toAbsolutePath()
         val unixStylePathForUri = normalizedPathToDistribution.toString().replace(File.separatorChar, '/').replace('\\', '/')
 
-        val (warLibPath, warRootPath) = if (unixStylePathForUri.endsWith(".zip")) {
+        val (warLibPath, warRootPath, metricLibPath) = if (unixStylePathForUri.endsWith(".zip")) {
             val checkZip = URI("jar:file", unixStylePathForUri.mustStartWith('/'), null)
             log.warn("  ${checkZip}")
             val checkZipFs = FileSystems.newFileSystem(checkZip, mapOf("create" to "false"))
@@ -239,16 +239,18 @@ class Server(cfgLoader: ServerConfigLoader) {
                         log.error("The extracted distribution WAR file from ${solrDistribution} cannot be opened as a Zip file, due to '${ex.message ?: ex.javaClass.getName()}'", ex)
                         return FAILED_DEPLOYMENT
                     }
-                    Pair(warJarFs.getPath("/WEB-INF/lib/"), warJarFs.getPath("/"))
+                    Triple(warJarFs.getPath("/WEB-INF/lib/"), warJarFs.getPath("/"), null)
                 } else {
                     val checkInnerDir = checkZipFs.getPath("/${firstLevelDir}/server/solr-webapp/webapp")
-                    log.warn("  ${checkZip}!${checkInnerDir}")
-                    Pair(checkInnerDir.resolve("WEB-INF/lib/"), checkInnerDir)
+                    log.warn("  webapp:     ${checkZip}!${checkInnerDir}")
+                    val checkServerDir = checkZipFs.getPath("/${firstLevelDir}/server")
+                    log.warn("  server lib: ${checkZip}!${checkServerDir}/lib")
+                    Triple(checkInnerDir.resolve("WEB-INF/lib/"), checkInnerDir, checkServerDir.resolve("lib/"))
                 }
             }
             else {
                 log.error("The distribution Zip file from ${solrDistribution} does not seem to contain a solr-* root directory")
-                Pair(null, null)  // TODO: why is this not allowed:  return FAILED_DEPLOYMENT
+                Triple(null, null, null)  // TODO: why is this not allowed:  return FAILED_DEPLOYMENT
             }
         } else {
             val warUri = URI("jar:file", unixStylePathForUri.mustStartWith('/'), null)
@@ -260,7 +262,7 @@ class Server(cfgLoader: ServerConfigLoader) {
                 log.error("The WAR file ${solrDistribution} cannot be opened as a Zip file, due to '${ex.message ?: ex.javaClass.getName()}'", ex)
                 return FAILED_DEPLOYMENT
             }
-            Pair(warJarFs.getPath("/WEB-INF/lib/"), warJarFs.getPath("/"))
+            Triple(warJarFs.getPath("/WEB-INF/lib/"), warJarFs.getPath("/"), null)
         }
 
         if (warLibPath == null || warRootPath == null || warLibPath.notExists() || !Files.isDirectory(warLibPath)) {
@@ -273,6 +275,14 @@ class Server(cfgLoader: ServerConfigLoader) {
             val jarDestination = tempDirJars.resolve(zippedJar.getFileName().toString())
             Files.copy(zippedJar, jarDestination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
             jarFiles.add(jarDestination.toUri().toURL())
+        }
+
+        if (metricLibPath != null) {
+            Files.newDirectoryStream(metricLibPath, "metrics-*.jar").forEach { zippedJar ->
+                val jarDestination = tempDirJars.resolve(zippedJar.getFileName().toString())
+                Files.copy(zippedJar, jarDestination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+                jarFiles.add(jarDestination.toUri().toURL())
+            }
         }
 
         if (cfg.hasLibExtDir()) {

@@ -2,4 +2,8 @@
 /solr-4.9.0.war
 /solr-4.10.2.war
 /solr-5.0.0.war
+/solr-5.5.2.zip
+/solr-6.6.2.zip
+/solr-7.7.1.zip
+/solr-8.0.0.zip
 *.zip
